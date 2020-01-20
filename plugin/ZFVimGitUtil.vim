@@ -419,7 +419,6 @@ function! ZF_GitPushQuickly(bang, ...)
     call system('git commit -m "' . comment . '"')
     let pushResult = system('git push "' . remoteUrl . '" HEAD')
     call system('git fetch "' . remoteUrl . '" +refs/heads/*:refs/remotes/origin/*')
-    call system('git pull "' . remoteUrl . '"')
     redraw!
     " strip password
     let pushResult = substitute(pushResult, ':[^:]*@', '@', 'g')
