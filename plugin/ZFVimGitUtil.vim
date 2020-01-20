@@ -362,7 +362,7 @@ function! ZF_GitPushQuickly(bang, ...)
         echo 'unable to parse git branch'
         return
     endif
-    call system('git fetch "' . remoteUrl . '" +refs/heads/*:refs/remotes/origin/*')
+    call system('git fetch "' . remoteUrl . '" "+refs/heads/*:refs/remotes/origin/*"')
     let pullResult = system('git reset --hard origin/' . branch)
     if match(pullResult, 'unknown revision or path not in the working tree') < 0
         " pull only if remote branch exists
@@ -418,7 +418,7 @@ function! ZF_GitPushQuickly(bang, ...)
     call system('git add -A')
     call system('git commit -m "' . comment . '"')
     let pushResult = system('git push "' . remoteUrl . '" HEAD')
-    call system('git fetch "' . remoteUrl . '" +refs/heads/*:refs/remotes/origin/*')
+    call system('git fetch "' . remoteUrl . '" "+refs/heads/*:refs/remotes/origin/*"')
     redraw!
     " strip password
     let pushResult = substitute(pushResult, ':[^:]*@', '@', 'g')
