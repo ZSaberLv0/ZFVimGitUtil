@@ -418,6 +418,7 @@ function! ZF_GitPushQuickly(bang, ...)
     call system('git add -A')
     call system('git commit -m "' . comment . '"')
     let pushResult = system('git push "' . remoteUrl . '" HEAD')
+    call system('sleep 1') " wait for remote, so the later `git fetch` would get correct state
     call system('git fetch "' . remoteUrl . '" +refs/heads/*:refs/remotes/origin/*')
     redraw!
     " strip password
