@@ -54,7 +54,7 @@ git clean -xdf
 git pull "%REMOTE_URL%"
 
 set _TMP_DIR=_git_hard_remove_all_history_tmp_
-mkdir %_TMP_DIR%
+mkdir "%_TMP_DIR%"
 
 REM the shitty dos batch unable to `move` dirs with dot prefix that has contents
 REM move ".git" "%_TMP_DIR%\"

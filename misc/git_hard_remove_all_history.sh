@@ -45,8 +45,8 @@ git clean -xdf
 git pull "$REMOTE_URL"
 
 _TMP_DIR=_git_hard_remove_all_history_tmp_
-mkdir $_TMP_DIR
-mv .git $_TMP_DIR/
+mkdir "$_TMP_DIR"
+mv .git "$_TMP_DIR/"
 
 _PROJ_DIR=$(pwd)
 cd "$_TMP_DIR"
@@ -58,8 +58,8 @@ git filter-branch --force --index-filter "git rm --cached --ignore-unmatch *" --
 
 cd "$_PROJ_DIR"
 
-mv $_TMP_DIR/.git ./
-rm -rf $_TMP_DIR
+mv "$_TMP_DIR/.git" ./
+rm -rf "$_TMP_DIR"
 
 git add -A
 git commit -a -m "cleanup history"
