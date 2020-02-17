@@ -63,7 +63,6 @@ rm -rf "$_TMP_DIR"
 
 git add -A
 git commit -a -m "cleanup history"
-git config push.default "simple"
 if test "x$GIT_USER_EMAIL" = "x" || test "x$GIT_USER_NAME" = "x" || test "x$GIT_USER_TOKEN" = "x" ; then
     git push --force
 else

@@ -279,7 +279,6 @@ function! ZF_GitHardRemoveAllHistory()
 
     call system('git config user.email "' . gitInfo.git_user_email . '"')
     call system('git config user.name "' . gitInfo.git_user_name . '"')
-    call system('git config push.default "simple"')
 
     if has('win32') || has('win64')
         let cmd = '"' . s:scriptPath . 'git_hard_remove_all_history.bat' . '"'
@@ -340,7 +339,6 @@ function! ZF_GitPushQuickly(bang, ...)
     echo 'updating... ' . url
     call system('git config user.email "' . gitInfo.git_user_email . '"')
     call system('git config user.name "' . gitInfo.git_user_name . '"')
-    call system('git config push.default "simple"')
     for config in get(g:, 'zf_git_extra_config', [
                 \   'git config core.filemode false',
                 \   'git config core.autocrlf false',

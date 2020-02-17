@@ -83,7 +83,6 @@ rmdir /s/q "%_TMP_DIR%"
 
 git add -A
 git commit -a -m "cleanup history"
-git config push.default "simple"
 
 set GIT_INFO_EXIST=1
 if not defined GIT_USER_EMAIL set GIT_INFO_EXIST=
