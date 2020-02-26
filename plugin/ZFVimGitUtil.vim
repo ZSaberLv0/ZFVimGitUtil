@@ -404,6 +404,7 @@ function! ZF_GitPushQuickly(bang, ...)
     endif
 
     if gitInfo.choice == 'u'
+        call system('git reset HEAD')
         redraw!
         echo pullResult
         echo "\n"
