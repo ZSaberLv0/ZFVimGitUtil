@@ -315,6 +315,28 @@ function! ZF_GitPushQuickly(bang, ...)
         return
     endif
 
+    let gitStatus = system('git status')
+    if match(gitStatus, 'Your branch is ahead of')
+        let hint = "[ZFGitPushQuickly] WARNING: you have local commits not pushed,"
+        let hint .= "\n    continue quick push may cause these commits lost,"
+        let hint .= "\n    you may want to first resolve it manually by:"
+        let hint .= "\n    * `git push` manually"
+        let hint .= "\n    * `git reset origin/<branch>` to undo local commit and try again"
+        let hint .= "\n"
+        let hint .= "\nif you are sure remote contains your local commits which not pushed,"
+        let hint .= "\nand really want to continue quick push,"
+        let hint .= "\nenter `got it` to continue: "
+        redraw!
+        call inputsave()
+        let input = input(hint)
+        call inputrestore()
+        if input != 'got it'
+            redraw!
+            echo '[ZFGitPushQuickly] canceled'
+            return
+        endif
+    endif
+
     let gitInfo = ZF_GitPrepare({
                 \   'module' : 'ZFGitPushQuickly',
                 \   'needPwd' : 1,
@@ -417,7 +439,13 @@ function! ZF_GitPushQuickly(bang, ...)
     call system('git add -A')
     call system('git commit -m "' . comment . '"')
     let pushResult = system('git push "' . remoteUrl . '" HEAD')
-    call system('git fetch "' . remoteUrl . '" "+refs/heads/*:refs/remotes/origin/*"')
+    if !exists('v:shell_error') || v:shell_error == 0
+        call system('git fetch "' . remoteUrl . '" "+refs/heads/*:refs/remotes/origin/*"')
+    else
+        " soft reset to undo commit,
+        " prevent next push's hard reset from causing commits dropped
+        call system('git reset origin/' . branch)
+    endif
     redraw!
     " strip password
     let pushResult = substitute(pushResult, ':[^:]*@', '@', 'g')
