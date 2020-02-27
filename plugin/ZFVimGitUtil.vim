@@ -316,7 +316,7 @@ function! ZF_GitPushQuickly(bang, ...)
     endif
 
     let gitStatus = system('git status')
-    if match(gitStatus, 'Your branch is ahead of')
+    if match(gitStatus, 'Your branch is ahead of') >= 0
         let hint = "[ZFGitPushQuickly] WARNING: you have local commits not pushed,"
         let hint .= "\n    continue quick push may cause these commits lost,"
         let hint .= "\n    you may want to first resolve it manually by:"
