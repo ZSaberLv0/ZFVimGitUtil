@@ -180,7 +180,12 @@ function! ZF_GitGetRemote()
 endfunction
 
 function! s:ZF_GitConfigGet(cmd)
-    return substitute(system(a:cmd), '[\r\n]', '', 'g')
+    let ret = substitute(system(a:cmd), '[\r\n]', '', 'g')
+    if ret == '='
+        return ''
+    else
+        return ret
+    endif
 endfunction
 function! ZF_GitGetInfo()
     let ret = {
