@@ -37,6 +37,11 @@ Plugin 'ZSaberLv0/ZFVimGitUtil'
     * we only support git remote with this syntax: `http(s)://user(:pwd)@server.xx(:port)/path`
     * typical case that not supported: `(ssh://)user@server:/path`
 
+* `ZFGitClean`
+
+    fill a temp file with untracked and ignored files,
+    save the temp file to remove all of these files
+
 * `ZFGitHardRemoveAllHistory`
 
     like the name, use with caution
