@@ -47,7 +47,8 @@ function! s:prepareLines(cleanInfo)
 
     call extend(lines, [
                 \   '',
-                \   '# save this file to perform cleanup',
+                \   '# `:write` to perform cleanup',
+                \   '# `:bdelete!` to cancel cleanup',
                 \   '# remove or comment lines to prevent certain files from being deleted',
                 \   '',
                 \ ])
@@ -73,6 +74,8 @@ function! s:setupBuffer(lines)
 endfunction
 
 function! ZF_GitClean_action(file)
+    redraw | echo '[ZFGitClean] perform cleanup, please wait...'
+
     for item in readfile(a:file)
         if match(item, '^[ \t]*#') >= 0
                     \ || match(item, '^[ \t]*$') >= 0
