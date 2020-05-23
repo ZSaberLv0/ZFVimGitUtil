@@ -153,12 +153,15 @@ command! -nargs=? -bang ZFGitPushQuickly :call ZF_GitPushQuickly(<q-bang>, <q-ar
 function! ZF_GitPushAllQuickly(gitRepoDirs, ...)
     let msg = get(a:, 1, 'update')
     let oldDir = getcwd()
-    redir => result
-    for dir in a:gitRepoDirs
-        execute 'cd ' . dir
-        execute 'ZFGitPushQuickly! ' . msg
-    endfor
-    redir END
+    try
+        redir => result
+        for dir in a:gitRepoDirs
+            execute 'cd ' . dir
+            execute 'ZFGitPushQuickly! ' . msg
+        endfor
+    finally
+        redir END
+    endtry
     execute 'cd ' . oldDir
     redraw!
     echo result
