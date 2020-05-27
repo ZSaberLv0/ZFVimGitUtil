@@ -113,7 +113,9 @@ function! ZF_GitPushQuickly(bang, ...)
         " =======
         " content B
         " >>>>>>> Stashed changes
-        let @/ = '^=======\+$'
+        "
+        " ^<<<<<<<+ .*$|^=======+$|^>>>>>>>+ .*$
+        let @/ = '^<<<<<<<\+ .*$\|^=======\+$\|^>>>>>>>\+ .*$'
         normal! ggnzz
 
         redraw!
