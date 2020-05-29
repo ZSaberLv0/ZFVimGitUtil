@@ -26,7 +26,7 @@ function! ZF_GitCleanInfo()
     " \tdeleted:    path/file
     let modified = {}
     let deleted = {}
-    for item in split(system('git status'), "\n")
+    for item in split(s:runGitCmd('status'), "\n")
         if 0
         elseif match(item, '^\tmodified: \+') >= 0
             " ^\tmodified: +
@@ -40,7 +40,7 @@ function! ZF_GitCleanInfo()
     " Would remove path/xxx
     let ignoredMap = {}
     let ignored = {}
-    for item in split(system('git clean -d -n -X'), "\n")
+    for item in split(s:runGitCmd('clean -d -n -X'), "\n")
         if match(item, '^Would remove') < 0
             continue
         endif
@@ -49,7 +49,7 @@ function! ZF_GitCleanInfo()
     endfor
 
     let untracked = {}
-    for item in split(system('git clean -d -n -x'), "\n")
+    for item in split(s:runGitCmd('clean -d -n -x'), "\n")
         if match(item, '^Would remove') < 0
                     \ || get(ignoredMap, item, 0)
             continue
@@ -63,6 +63,10 @@ function! ZF_GitCleanInfo()
                 \   'untracked' : untracked,
                 \   'ignored' : ignored,
                 \ }
+endfunction
+
+function! s:runGitCmd(cmd)
+    return system('git -c "core.quotepath=off" ' . a:cmd)
 endfunction
 
 function! s:prepareLines(cleanInfo)
