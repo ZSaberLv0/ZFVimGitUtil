@@ -10,16 +10,16 @@ function! ZF_GitClean()
         return
     endif
     let lines = s:prepareLines(cleanInfo)
-    call s:setupBuffer(lines)
+    call s:setupBuffer(cleanInfo, lines)
     redraw
 endfunction
 command! -nargs=0 ZFGitClean :call ZF_GitClean()
 
 " return: {
-"   'modified' : [],
-"   'deleted' : [],
-"   'untracked' : [],
-"   'ignored' : [],
+"   'modified' : {},
+"   'deleted' : {},
+"   'untracked' : {},
+"   'ignored' : {},
 " }
 function! ZF_GitCleanInfo()
     " \tmodified:   path/file
@@ -58,10 +58,10 @@ function! ZF_GitCleanInfo()
     endfor
 
     return {
-                \   'modified' : sort(keys(modified)),
-                \   'deleted' : sort(keys(deleted)),
-                \   'untracked' : sort(keys(untracked)),
-                \   'ignored' : sort(keys(ignored)),
+                \   'modified' : modified,
+                \   'deleted' : deleted,
+                \   'untracked' : untracked,
+                \   'ignored' : ignored,
                 \ }
 endfunction
 
@@ -78,38 +78,39 @@ function! s:prepareLines(cleanInfo)
 
     if !empty(a:cleanInfo['modified'])
         call add(lines, '# modified files:')
-        call extend(lines, a:cleanInfo['modified'])
+        call extend(lines, sort(keys(a:cleanInfo['modified'])))
         call add(lines, '')
     endif
 
     if !empty(a:cleanInfo['deleted'])
         call add(lines, '# deleted files:')
-        call extend(lines, a:cleanInfo['deleted'])
+        call extend(lines, sort(keys(a:cleanInfo['deleted'])))
         call add(lines, '')
     endif
 
     if !empty(a:cleanInfo['untracked'])
         call add(lines, '# untracked files:')
-        call extend(lines, a:cleanInfo['untracked'])
+        call extend(lines, sort(keys(a:cleanInfo['untracked'])))
         call add(lines, '')
     endif
 
     if !empty(a:cleanInfo['ignored'])
         call add(lines, '# ignored files:')
-        call extend(lines, a:cleanInfo['ignored'])
+        call extend(lines, sort(keys(a:cleanInfo['ignored'])))
         call add(lines, '')
     endif
 
     return lines
 endfunction
 
-function! s:setupBuffer(lines)
+function! s:setupBuffer(cleanInfo, lines)
     let file = tempname()
     execute 'edit ' . substitute(file, ' ', '\\ ', 'g')
     call setline(1, a:lines)
     setlocal nomodified
     setlocal filetype=sh
     autocmd BufWritePost <buffer> call ZF_GitClean_action(expand('<afile>'))
+    let b:ZFGitCleanInfo = a:cleanInfo
 endfunction
 
 function! ZF_GitClean_action(file)
@@ -123,7 +124,7 @@ function! ZF_GitClean_action(file)
         let item = substitute(item, '^[ \t]\+', '', 'g')
         let item = substitute(item, '[ \t]\+$', '', 'g')
         if !empty(item)
-            call ZF_GitClean_clean(item)
+            call s:cleanFileOrDir(item)
         endif
     endfor
     execute 'bdelete ' . substitute(a:file, ' ', '\\ ', 'g')
@@ -131,14 +132,18 @@ function! ZF_GitClean_action(file)
     ZFGitClean
 endfunction
 
-function! ZF_GitClean_clean(fileOrDir)
-    call system('git reset HEAD "' . a:fileOrDir . '"')
-    if has('win32') || has('win64')
-        call system('del /f/q "' . substitute(a:fileOrDir, '/', '\\', 'g') . '"')
-        call system('rmdir /s/q "' . substitute(a:fileOrDir, '/', '\\', 'g') . '"')
-    else
-        call system('rm -rf "' . a:fileOrDir . '"')
+function! s:cleanFileOrDir(fileOrDir)
+    if 0
+    elseif exists("b:ZFGitCleanInfo['modified'][a:fileOrDir]") || exists("b:ZFGitCleanInfo['deleted'][a:fileOrDir]")
+        call system('git reset HEAD "' . a:fileOrDir . '"')
+        call system('git checkout "' . a:fileOrDir . '"')
+    elseif exists("b:ZFGitCleanInfo['untracked'][a:fileOrDir]") || exists("b:ZFGitCleanInfo['ignored'][a:fileOrDir]")
+        if has('win32') || has('win64')
+            call system('del /f/q "' . substitute(a:fileOrDir, '/', '\\', 'g') . '"')
+            call system('rmdir /s/q "' . substitute(a:fileOrDir, '/', '\\', 'g') . '"')
+        else
+            call system('rm -rf "' . a:fileOrDir . '"')
+        endif
     endif
-    call system('git checkout "' . a:fileOrDir . '"')
 endfunction
 
