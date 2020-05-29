@@ -35,7 +35,10 @@ Plugin 'ZSaberLv0/ZFVimGitUtil'
     note:
 
     * we only support git remote with this syntax: `http(s)://user(:pwd)@server.xx(:port)/path`
-    * typical case that not supported: `(ssh://)user@server:/path`
+    * typical case that not directly supported: `(ssh://)user@server:/path`
+    * to support ssh repo:
+        1. on YourClient: `ssh-keygen`
+        1. on YourClient: `ssh-copy-id -i ~/.ssh/id_rsa.pub YourServerUserName@YourServerDomain`
 
 * `ZFGitClean`
 

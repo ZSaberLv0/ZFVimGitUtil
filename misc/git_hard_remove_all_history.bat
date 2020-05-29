@@ -30,7 +30,8 @@ cd /d "%PROJ_PATH%"
 for /f "delims=" %%a in ('git remote -v ^| findstr "(push)"') do @set REMOTE_URL=%%a
 set REMOTE_URL=!REMOTE_URL:origin	=!
 set REMOTE_URL=!REMOTE_URL: (push)=!
-set REMOTE_URL=!REMOTE_URL:://=://%GIT_USER_NAME%:%GIT_USER_TOKEN%@!
+set REMOTE_URL=!REMOTE_URL:http://=http://%GIT_USER_NAME%:%GIT_USER_TOKEN%@!
+set REMOTE_URL=!REMOTE_URL:https://=https://%GIT_USER_NAME%:%GIT_USER_TOKEN%@!
 
 for /f "delims=" %%a in ('git rev-parse --abbrev-ref HEAD') do @set BRANCH=%%a
 if not defined BRANCH (

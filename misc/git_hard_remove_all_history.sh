@@ -27,7 +27,8 @@ cd "$PROJ_PATH"
 REMOTE_URL=`git remote -v | grep "(push)"`
 REMOTE_URL=`echo $REMOTE_URL | sed -e "s/origin[^a-z]*//g"`
 REMOTE_URL=`echo $REMOTE_URL | sed -e "s/ *(push)//g"`
-REMOTE_URL=`echo $REMOTE_URL | sed -e "s#://#://$GIT_USER_NAME:$GIT_USER_TOKEN@#g"`
+REMOTE_URL=`echo $REMOTE_URL | sed -e "s#http://#http://$GIT_USER_NAME:$GIT_USER_TOKEN@#g"`
+REMOTE_URL=`echo $REMOTE_URL | sed -e "s#https://#https://$GIT_USER_NAME:$GIT_USER_TOKEN@#g"`
 
 BRANCH=`git rev-parse --abbrev-ref HEAD`
 if test "x-$BRANCH" = "x-" ; then

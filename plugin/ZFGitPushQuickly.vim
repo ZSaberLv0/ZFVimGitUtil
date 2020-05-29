@@ -11,6 +11,9 @@ function! ZF_GitPushQuickly(bang, ...)
         echo 'unable to parse remote url'
         return
     endif
+    if ZF_GitCheckSsh(url)
+        return
+    endif
 
     let gitStatus = system('git status')
     if match(gitStatus, 'Your branch is ahead of') >= 0
@@ -50,9 +53,13 @@ function! ZF_GitPushQuickly(bang, ...)
         return
     endif
 
-    let pos = match(url, '://') + len('://')
-    " http://user:pwd@github.com/user/repo
-    let remoteUrl = strpart(url, 0, pos) . gitInfo.git_user_name . ':' . gitInfo.git_user_pwd . '@' . strpart(url, pos)
+    if gitInfo.git_remotetype != 'ssh'
+        let pos = match(url, '://') + len('://')
+        " http://user:pwd@github.com/user/repo
+        let remoteUrl = strpart(url, 0, pos) . gitInfo.git_user_name . ':' . gitInfo.git_user_pwd . '@' . strpart(url, pos)
+    else
+        let remoteUrl = url
+    endif
 
     redraw!
     echo 'updating... ' . url

@@ -40,6 +40,9 @@ function! ZF_GitPrepare(options)
         return
     endif
     let choice = 'y'
+    if ret.git_remotetype == 'ssh'
+        let needPwd = 0
+    endif
 
     let ret.git_user_pwd = get(s:ZF_GitPrepare_savedPwd, ret.git_user_name . ':' . ret.git_remoteurl, ret.git_user_pwd)
     if empty(ret.git_user_pwd)
@@ -157,21 +160,48 @@ function! ZF_GitPrepare(options)
 endfunction
 
 function! ZF_GitGetRemote()
-    " supported:
+    " http:
     "   origin\thttps://github.com/xxx/xxx (fetch)
     "   origin\thttps://github.com/xxx/xxx (push)
     "
-    " not supported:
+    " ssh:
     "   origin  root@192.168.xx.xx:/path/sample (fetch)
     "   origin  root@192.168.xx.xx:/path/sample (push)
     let remote = system('git remote -v')
     " (?<=origin[ \t]+)[^ \t]+(?=[ \t]+\(push\))
     let url = matchstr(remote, '\%(origin[ \t]\+\)\@<=[^ \t]\+\%([ \t]\+(push)\)\@=')
-    if empty(url) || match(url, '://') < 0
-        return ''
+    return substitute(url, '://.\+@', '://', '')
+endfunction
+
+function! ZF_GitGetRemoteType(remoteUrl)
+    " https?://
+    if match(a:remoteUrl, 'https\=://') >= 0
+        return 'http'
+    else
+        return 'ssh'
     endif
-    let url = substitute(url, '://.\+@', '://', '')
-    return url
+endfunction
+
+function! ZF_GitCheckSsh(url)
+    if ZF_GitGetRemoteType(a:url) != 'ssh'
+        return 0
+    endif
+    redraw!
+    let hint = "ssh repo detected:"
+    let hint .= "\n    " . a:url
+    let hint .= "\n"
+    let hint .= "\nthere's no way to push without proper ssh key"
+    let hint .= "\nif you know what you are doing and really want to continue"
+    let hint .= "\nenter `got it` to continue: "
+    call inputsave()
+    let input = input(hint)
+    call inputrestore()
+    if input != 'got it'
+        redraw!
+        echo 'canceled'
+        return 1
+    endif
+    return 0
 endfunction
 
 function! ZF_GitConfigGet(cmd)
@@ -185,6 +215,7 @@ endfunction
 function! ZF_GitGetInfo()
     let ret = {
                 \   'git_remoteurl' : '',
+                \   'git_remotetype' : '',
                 \   'git_user_email' : '',
                 \   'git_user_name' : '',
                 \   'git_user_pwd' : '',
@@ -194,6 +225,7 @@ function! ZF_GitGetInfo()
     if empty(ret.git_remoteurl)
         return ret
     endif
+    let ret.git_remotetype = ZF_GitGetRemoteType(ret.git_remoteurl)
 
     for userSetting in get(g:, 'zf_git', [])
         if !empty(get(userSetting, 'repo', ''))

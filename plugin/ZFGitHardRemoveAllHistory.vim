@@ -8,6 +8,9 @@ function! ZF_GitHardRemoveAllHistory()
         echo 'unable to parse remote url'
         return
     endif
+    if ZF_GitCheckSsh(url)
+        return
+    endif
 
     let gitInfo = ZF_GitPrepare({
                 \   'module' : 'ZFGitHardRemoveAllHistory',
