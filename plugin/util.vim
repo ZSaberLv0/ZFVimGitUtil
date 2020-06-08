@@ -187,11 +187,13 @@ function! ZF_GitCheckSsh(url)
         return 0
     endif
     redraw!
-    let hint = "ssh repo detected:"
+    let hint = "NOTE: ssh repo detected:"
     let hint .= "\n    " . a:url
     let hint .= "\n"
-    let hint .= "\nthere's no way to push without proper ssh key"
-    let hint .= "\nif you know what you are doing and really want to continue"
+    let hint .= "\nthere's no way to quick push without proper ssh key"
+    let hint .= "\nif you are sure it's setup properly"
+    let hint .= "\n  (`git fetch --all` does not require password)"
+    let hint .= "\n"
     let hint .= "\nenter `got it` to continue: "
     call inputsave()
     let input = input(hint)

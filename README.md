@@ -34,11 +34,14 @@ Plugin 'ZSaberLv0/ZFVimGitUtil'
 
     note:
 
-    * we only support git remote with this syntax: `http(s)://user(:pwd)@server.xx(:port)/path`
-    * typical case that not directly supported: `(ssh://)user@server:/path`
+    * only http(s) repo is directly supported: `http(s)://user(:pwd)@server.xx(:port)/path`
+    * ssh repo is not directly supported: `(ssh://)user@server:/path`
     * to support ssh repo:
         1. on YourClient: `ssh-keygen`
         1. on YourClient: `ssh-copy-id -i ~/.ssh/id_rsa.pub YourServerUserName@YourServerDomain`
+        1. make sure it works before actually use quick push:
+
+            `git fetch --all`, if fetch success without password required, then you are done
 
 * `ZFGitClean`
 
