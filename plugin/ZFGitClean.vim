@@ -74,53 +74,83 @@ function! s:prepareLines(cleanInfo)
 
     call extend(lines, [
                 \   '',
-                \   '# `:write` to perform cleanup',
-                \   '# `:bdelete!` to cancel cleanup',
-                \   '# remove or comment lines to prevent file from being reset or deleted',
+                \   '# `q` to perform or cancel cleanup',
+                \   '# remove or comment lines to prevent file from being cleanup',
                 \   '',
                 \ ])
 
     if !empty(a:cleanInfo['modified'])
         call add(lines, '# modified files:')
-        call extend(lines, sort(keys(a:cleanInfo['modified'])))
+        call s:prepareLineItems(lines, sort(keys(a:cleanInfo['modified'])))
         call add(lines, '')
     endif
 
     if !empty(a:cleanInfo['deleted'])
         call add(lines, '# deleted files:')
-        call extend(lines, sort(keys(a:cleanInfo['deleted'])))
+        call s:prepareLineItems(lines, sort(keys(a:cleanInfo['deleted'])))
         call add(lines, '')
     endif
 
     if !empty(a:cleanInfo['untracked'])
         call add(lines, '# untracked files:')
-        call extend(lines, sort(keys(a:cleanInfo['untracked'])))
+        call s:prepareLineItems(lines, sort(keys(a:cleanInfo['untracked'])))
         call add(lines, '')
     endif
 
     if !empty(a:cleanInfo['ignored'])
         call add(lines, '# ignored files:')
-        call extend(lines, sort(keys(a:cleanInfo['ignored'])))
+        call s:prepareLineItems(lines, sort(keys(a:cleanInfo['ignored'])), 0)
         call add(lines, '')
     endif
 
     return lines
 endfunction
+function! s:prepareLineItems(lines, items, ...)
+    let enable = get(a:, 1, 1)
+    if enable
+        let prefix = '    '
+    else
+        let prefix = '    # '
+    endif
+    for item in a:items
+        call add(a:lines, prefix . item)
+    endfor
+endfunction
 
 function! s:setupBuffer(cleanInfo, lines)
+    tabnew
     let file = tempname()
     execute 'edit ' . substitute(file, ' ', '\\ ', 'g')
     call setline(1, a:lines)
     setlocal nomodified
     setlocal filetype=sh
-    autocmd BufWritePost <buffer> call ZF_GitClean_action(expand('<afile>'))
+    setlocal foldmethod=indent
+    setlocal foldignore=
+    setlocal foldlevel=128
     let b:ZFGitCleanInfo = a:cleanInfo
+    nnoremap <buffer><silent> q :call ZF_GitClean_action()<cr>
 endfunction
 
-function! ZF_GitClean_action(file)
+function! ZF_GitClean_action()
+    redraw!
+    echo '[ZFGitClean] perform cleanup?'
+    echo '  (y)es'
+    echo '  (n)o'
+    echo '  (e)dit'
+    echo ''
+    echo 'choice: '
+    let confirm = nr2char(getchar())
+    if confirm != 'y'
+        if confirm == 'n'
+            bdelete!
+        endif
+        redraw | echo '[ZFGitClean] canceled'
+        return
+    endif
+
     redraw | echo '[ZFGitClean] perform cleanup, please wait...'
 
-    for item in readfile(a:file)
+    for item in getline(1, '$')
         if match(item, '^[ \t]*#') >= 0
                     \ || match(item, '^[ \t]*$') >= 0
             continue
@@ -131,8 +161,7 @@ function! ZF_GitClean_action(file)
             call s:cleanFileOrDir(item)
         endif
     endfor
-    execute 'bdelete ' . substitute(a:file, ' ', '\\ ', 'g')
-    redraw
+    bdelete!
     ZFGitClean
 endfunction
 
