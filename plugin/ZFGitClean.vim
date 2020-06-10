@@ -66,7 +66,7 @@ function! ZF_GitCleanInfo()
 endfunction
 
 function! s:runGitCmd(cmd)
-    return system('git -c "core.quotepath=off" ' . a:cmd)
+    return system('git -c "core.quotepath=false" ' . a:cmd)
 endfunction
 
 function! s:prepareLines(cleanInfo)
