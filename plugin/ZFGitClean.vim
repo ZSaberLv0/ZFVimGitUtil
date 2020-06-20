@@ -119,9 +119,12 @@ endfunction
 
 function! s:setupBuffer(cleanInfo, lines)
     tabnew
-    let file = tempname()
-    execute 'edit ' . substitute(file, ' ', '\\ ', 'g')
+    enew
     call setline(1, a:lines)
+    setlocal buftype=nofile
+    setlocal bufhidden=wipe
+    setlocal noswapfile
+    setlocal nobuflisted
     setlocal nomodified
     setlocal filetype=sh
     setlocal foldmethod=indent
