@@ -186,6 +186,23 @@ function! ZF_GitCheckSsh(url)
     if ZF_GitGetRemoteType(a:url) != 'ssh'
         return 0
     endif
+
+    " Fetching origin
+    " Host key verification failed.
+    " fatal: Could not read from remote repository.
+    "
+    " Please make sure you have the correct access rights
+    " and the repository exists.
+    " error: Could not fetch origin
+    let tryFetch = system('git fetch --all')
+    if match(tryFetch, 'Fetching origin') >= 0
+                \ && match(tryFetch, 'Host key verification failed') < 0
+                \ && match(tryFetch, 'Could not read from remote repository') < 0
+                \ && match(tryFetch, 'Please make sure you have the correct access rights') < 0
+                \ && match(tryFetch, 'Could not fetch origin') < 0
+        return 0
+    endif
+
     redraw!
     let hint = "NOTE: ssh repo detected:"
     let hint .= "\n    " . a:url
