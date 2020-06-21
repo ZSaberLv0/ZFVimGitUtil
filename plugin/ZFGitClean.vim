@@ -151,8 +151,7 @@ function! ZF_GitClean_action()
         return
     endif
 
-    redraw | echo '[ZFGitClean] perform cleanup, please wait...'
-
+    let toClean = []
     for item in getline(1, '$')
         if match(item, '^[ \t]*#') >= 0
                     \ || match(item, '^[ \t]*$') >= 0
@@ -161,9 +160,18 @@ function! ZF_GitClean_action()
         let item = substitute(item, '^[ \t]\+', '', 'g')
         let item = substitute(item, '[ \t]\+$', '', 'g')
         if !empty(item)
-            call s:cleanFileOrDir(item)
+            call add(toClean, item)
         endif
     endfor
+
+    let i = 0
+    let iEnd = len(toClean)
+    while i < iEnd
+        redraw | echo '[ZFGitClean] (' . (i+1) . '/' . iEnd . ') cleanup: ' . fnamemodify(toClean[i], ':t')
+        call s:cleanFileOrDir(toClean[i])
+        let i += 1
+    endwhile
+
     bdelete!
     ZFGitClean
 endfunction
@@ -171,7 +179,6 @@ endfunction
 function! s:cleanFileOrDir(fileOrDir)
     if 0
     elseif exists("b:ZFGitCleanInfo['modified'][a:fileOrDir]") || exists("b:ZFGitCleanInfo['deleted'][a:fileOrDir]")
-        call system('git reset HEAD "' . a:fileOrDir . '"')
         call system('git checkout "' . a:fileOrDir . '"')
     elseif exists("b:ZFGitCleanInfo['untracked'][a:fileOrDir]") || exists("b:ZFGitCleanInfo['ignored'][a:fileOrDir]")
         if has('win32') || has('win64')
