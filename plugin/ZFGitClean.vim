@@ -138,13 +138,13 @@ function! ZF_GitClean_action()
     redraw!
     echo '[ZFGitClean] perform cleanup?'
     echo '  (y)es'
-    echo '  (n)o'
+    echo '  (n)o / (q)uit'
     echo '  (e)dit'
     echo ''
     echo 'choice: '
     let confirm = nr2char(getchar())
     if confirm != 'y'
-        if confirm == 'n'
+        if confirm == 'n' || confirm == 'q'
             bdelete!
         endif
         redraw | echo '[ZFGitClean] canceled'
