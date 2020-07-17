@@ -16,7 +16,7 @@ function! ZF_GitPushQuickly(bang, ...)
     endif
 
     let gitStatus = system('git status')
-    if match(gitStatus, 'Your branch is ahead of') >= 0
+    if ZF_GitMsgMatch(gitStatus, ZF_GitMsgFormat_containLocalCommits()) >= 0
         let hint = "[ZFGitPushQuickly] WARNING: you have local commits not pushed,"
         let hint .= "\n    continue quick push may cause these commits lost,"
         let hint .= "\n    you may want to first resolve it manually by:"
@@ -88,48 +88,33 @@ function! ZF_GitPushQuickly(bang, ...)
     endif
     call system('git fetch "' . remoteUrl . '" "+refs/heads/*:refs/remotes/origin/*"')
     let pullResult = system('git reset --hard origin/' . branch)
-    if match(pullResult, 'unknown revision or path not in the working tree') < 0
+    if ZF_GitMsgMatch(pullResult, ZF_GitMsgFormat_noRemoteBranch()) < 0
         " pull only if remote branch exists
         call system('git pull "' . remoteUrl . '"')
     endif
     let stashResult = system('git stash pop')
-    if match(stashResult, 'Merge conflict in ') >= 0
-        " Auto-merging b.txt
-        " CONFLICT (content): Merge conflict in b.txt
-        " Auto-merging a.txt
-        " CONFLICT (content): Merge conflict in a.txt
-        let conflicts = []
-        let s = stashResult
-        while 1
-            let c = match(s, '\%(Merge conflict in \)\@<=[^\r\n]\+')
-            if c < 0
-                break
-            endif
-            let p = matchstr(s, '\%(Merge conflict in \)\@<=[^\r\n]\+')
-            call add(conflicts, p)
-            let s = strpart(s, c + len(p))
-        endwhile
-        if !empty(conflicts)
-            for conflict in conflicts
-                execute 'edit ' . conflict
-            endfor
+    let stashResultLines = split(stashResult, "\n")
+    let conflictPatterns = ZF_GitMsgFormat_conflict()
+    for stashResultLine in stashResultLines
+        if ZF_GitMsgMatch(stashResultLine, conflictPatterns) >= 0
+            call s:openConflictFiles(stashResultLines)
+
+            " <<<<<<< Updated upstream
+            " content A
+            " =======
+            " content B
+            " >>>>>>> Stashed changes
+            "
+            " ^<<<<<<<+ .*$|^=======+$|^>>>>>>>+ .*$
+            let @/ = '^<<<<<<<\+ .*$\|^=======\+$\|^>>>>>>>\+ .*$'
+            normal! ggnzz
+
+            redraw!
+            echo stashResult
+            call system('git stash drop')
+            return
         endif
-
-        " <<<<<<< Updated upstream
-        " content A
-        " =======
-        " content B
-        " >>>>>>> Stashed changes
-        "
-        " ^<<<<<<<+ .*$|^=======+$|^>>>>>>>+ .*$
-        let @/ = '^<<<<<<<\+ .*$\|^=======\+$\|^>>>>>>>\+ .*$'
-        normal! ggnzz
-
-        redraw!
-        echo stashResult
-        call system('git stash drop')
-        return
-    endif
+    endfor
 
     if gitInfo.choice == 'u'
         call system('git reset HEAD')
@@ -178,5 +163,26 @@ function! ZF_GitPushAllQuickly(gitRepoDirs, ...)
         let @* = result
     endif
     let @" = result
+endfunction
+
+function! ZF_GitMsgMatch(text, patterns)
+    for i in range(len(a:patterns))
+        if match(a:text, a:patterns[i]) >= 0
+            return i
+        endif
+    endfor
+    return -1
+endfunction
+
+function! s:openConflictFiles(stashResultLines)
+    let matcherList = ZF_GitMsgFormat_conflictFileMatcher()
+    for line in split(system('git status'), "\n")
+        for matcher in matcherList
+            let file = substitute(line, matcher[0], matcher[1], '')
+            if !empty(file) && filereadable(file)
+                execute 'edit ' . substitute(file, ' ', '\\ ', 'g')
+            endif
+        endfor
+    endfor
 endfunction
 
