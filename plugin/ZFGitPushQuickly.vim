@@ -112,6 +112,7 @@ function! ZF_GitPushQuickly(bang, ...)
             redraw!
             echo stashResult
             call system('git stash drop')
+            call system('git reset')
             return
         endif
     endfor
