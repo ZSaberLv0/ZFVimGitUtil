@@ -208,9 +208,12 @@ function! ZF_GitCheckSsh(url)
     let hint .= "\n    " . a:url
     let hint .= "\n"
     let hint .= "\nthere's no way to quick push without proper ssh key"
+    let hint .= "\ntypically this is what you should do:"
+    let hint .= "\n    ssh-keygen"
+    let hint .= "\n    ssh-copy-id -i ~/.ssh/id_rsa.pub YourServerUserName@YourServerDomain"
+    let hint .= "\n"
     let hint .= "\nif you are sure it's setup properly"
     let hint .= "\n  (`git fetch --all` does not require password)"
-    let hint .= "\n"
     let hint .= "\nenter `got it` to continue: "
     call inputsave()
     let input = input(hint)
