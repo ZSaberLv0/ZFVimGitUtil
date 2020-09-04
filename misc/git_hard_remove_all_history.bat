@@ -52,7 +52,7 @@ git checkout .
 git fetch "%REMOTE_URL%" +refs/heads/*:refs/remotes/origin/*
 git reset --hard origin/%BRANCH%
 git clean -xdf
-git pull "%REMOTE_URL%"
+git pull "%REMOTE_URL%" "%BRANCH%"
 
 set _TMP_DIR=_git_hard_remove_all_history_tmp_
 mkdir "%_TMP_DIR%"

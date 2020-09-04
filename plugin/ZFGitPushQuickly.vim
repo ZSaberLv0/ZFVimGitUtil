@@ -90,7 +90,7 @@ function! ZF_GitPushQuickly(bang, ...)
     let pullResult = system('git reset --hard origin/' . branch)
     if ZF_GitMsgMatch(pullResult, ZF_GitMsgFormat_noRemoteBranch()) < 0
         " pull only if remote branch exists
-        call system('git pull "' . remoteUrl . '"')
+        call system('git pull "' . remoteUrl . '" "' . branch . '"')
     endif
     let stashResult = system('git stash pop')
     let stashResultLines = split(stashResult, "\n")
