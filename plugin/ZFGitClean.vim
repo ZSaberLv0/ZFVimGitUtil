@@ -179,14 +179,30 @@ endfunction
 function! s:cleanFileOrDir(fileOrDir)
     if 0
     elseif exists("b:ZFGitCleanInfo['modified'][a:fileOrDir]") || exists("b:ZFGitCleanInfo['deleted'][a:fileOrDir]")
+        call s:tryBackup(a:fileOrDir)
         call system('git checkout "' . a:fileOrDir . '"')
     elseif exists("b:ZFGitCleanInfo['untracked'][a:fileOrDir]") || exists("b:ZFGitCleanInfo['ignored'][a:fileOrDir]")
+        call s:tryBackup(a:fileOrDir)
         if has('win32') || has('win64')
             call system('del /f/q "' . substitute(a:fileOrDir, '/', '\\', 'g') . '"')
             call system('rmdir /s/q "' . substitute(a:fileOrDir, '/', '\\', 'g') . '"')
         else
             call system('rm -rf "' . a:fileOrDir . '"')
         endif
+    endif
+endfunction
+
+function! s:tryBackup(fileOrDir)
+    if !exists('*ZFBackupSave')
+        return
+    endif
+
+    if isdirectory(a:fileOrDir)
+        for f in split(globpath(a:fileOrDir, '*'), "\n")
+            call ZFBackupSave(f)
+        endfor
+    else
+        call ZFBackupSave(a:fileOrDir)
     endif
 endfunction
 
