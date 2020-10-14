@@ -203,9 +203,16 @@ function! ZF_GitCheckSsh(url)
         return 0
     endif
 
+    let fetchHint = '    ' . tryFetch
+    let fetchHint = substitute(fetchHint, '[\r\n]\+$', '', 'g')
+    let fetchHint = substitute(fetchHint, '\([\r\n]\+\)', '\1    ', 'g')
+
     redraw!
     let hint = "NOTE: ssh repo detected:"
     let hint .= "\n    " . a:url
+    let hint .= "\n"
+    let hint .= "\nfetch hint:"
+    let hint .= "\n" . fetchHint
     let hint .= "\n"
     let hint .= "\nthere's no way to quick push without proper ssh key"
     let hint .= "\ntypically this is what you should do:"
