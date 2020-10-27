@@ -151,8 +151,8 @@ function! ZF_GitPushAllQuickly(gitRepoDirs, ...)
     try
         redir => result
         for dir in a:gitRepoDirs
-            execute 'cd ' . dir
-            execute 'ZFGitPushQuickly! ' . msg
+            silent execute 'cd ' . dir
+            silent execute 'ZFGitPushQuickly! ' . msg
         endfor
     finally
         redir END
