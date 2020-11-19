@@ -198,9 +198,7 @@ function! s:tryBackup(fileOrDir)
     endif
 
     if isdirectory(a:fileOrDir)
-        for f in split(globpath(a:fileOrDir, '*'), "\n")
-            call ZFBackupSave(f)
-        endfor
+        call ZFBackupSaveDir(f)
     else
         call ZFBackupSave(a:fileOrDir)
     endif
