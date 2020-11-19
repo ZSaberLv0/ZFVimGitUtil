@@ -198,7 +198,7 @@ function! s:tryBackup(fileOrDir)
     endif
 
     if isdirectory(a:fileOrDir)
-        call ZFBackupSaveDir(f)
+        call ZFBackupSaveDir(a:fileOrDir)
     else
         call ZFBackupSave(a:fileOrDir)
     endif
