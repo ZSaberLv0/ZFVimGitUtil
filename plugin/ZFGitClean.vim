@@ -137,19 +137,23 @@ endfunction
 function! ZF_GitClean_action()
     redraw!
     echo '[ZFGitClean] perform cleanup?'
+    if exists('*ZFBackupSave')
+        echo '  (Y)es without backup'
+    endif
     echo '  (y)es'
     echo '  (n)o / (q)uit'
     echo '  (e)dit'
     echo ''
     echo 'choice: '
     let confirm = nr2char(getchar())
-    if confirm != 'y'
+    if confirm != 'y' && confirm != 'Y'
         if confirm == 'n' || confirm == 'q'
             bdelete!
         endif
         redraw | echo '[ZFGitClean] canceled'
         return
     endif
+    let autoBackup = (confirm != 'Y')
 
     let toClean = []
     for item in getline(1, '$')
@@ -168,7 +172,7 @@ function! ZF_GitClean_action()
     let iEnd = len(toClean)
     while i < iEnd
         redraw | echo '[ZFGitClean] (' . (i+1) . '/' . iEnd . ') cleanup: ' . fnamemodify(toClean[i], ':t')
-        call s:cleanFileOrDir(toClean[i])
+        call s:cleanFileOrDir(toClean[i], autoBackup)
         let i += 1
     endwhile
 
@@ -176,13 +180,17 @@ function! ZF_GitClean_action()
     ZFGitClean
 endfunction
 
-function! s:cleanFileOrDir(fileOrDir)
+function! s:cleanFileOrDir(fileOrDir, autoBackup)
     if 0
     elseif exists("b:ZFGitCleanInfo['modified'][a:fileOrDir]") || exists("b:ZFGitCleanInfo['deleted'][a:fileOrDir]")
-        call s:tryBackup(a:fileOrDir)
+        if a:autoBackup
+            call s:tryBackup(a:fileOrDir)
+        endif
         call system('git checkout "' . a:fileOrDir . '"')
     elseif exists("b:ZFGitCleanInfo['untracked'][a:fileOrDir]") || exists("b:ZFGitCleanInfo['ignored'][a:fileOrDir]")
-        call s:tryBackup(a:fileOrDir)
+        if a:autoBackup
+            call s:tryBackup(a:fileOrDir)
+        endif
         if has('win32') || has('win64')
             call system('del /f/q "' . substitute(a:fileOrDir, '/', '\\', 'g') . '"')
             call system('rmdir /s/q "' . substitute(a:fileOrDir, '/', '\\', 'g') . '"')
