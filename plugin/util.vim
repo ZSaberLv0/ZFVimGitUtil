@@ -37,16 +37,18 @@ function! ZF_GitPrepare(options)
     let extraChoice = get(a:options, 'extraChoice', {})
     let ret = ZF_GitGetInfo()
     if empty(ret)
-        return
+        return {}
     endif
     let choice = 'y'
     if ret.git_remotetype == 'ssh'
         let needPwd = 0
     endif
 
-    let ret.git_user_pwd = get(s:ZF_GitPrepare_savedPwd, ret.git_user_name . ':' . ret.git_remoteurl, ret.git_user_pwd)
-    if empty(ret.git_user_pwd)
-        let ret.git_user_pwd = get(s:ZF_GitPrepare_savedPwdPredict, ret.git_user_name, ret.git_user_pwd)
+    if !empty(ret.git_user_name)
+        let ret.git_user_pwd = get(s:ZF_GitPrepare_savedPwd, ret.git_user_name . ':' . ret.git_remoteurl, ret.git_user_pwd)
+        if empty(ret.git_user_pwd)
+            let ret.git_user_pwd = get(s:ZF_GitPrepare_savedPwdPredict, ret.git_user_name, ret.git_user_pwd)
+        endif
     endif
     let reInput = 0
     while 1
@@ -136,7 +138,7 @@ function! ZF_GitPrepare(options)
     redraw!
     if empty(ret.git_user_email) || empty(ret.git_user_name)
         echo '[' . module . '] canceled'
-        return
+        return {}
     endif
 
     if empty(get(g:, 'zf_git_user_email', '')) || empty(get(g:, 'zf_git_user_name', ''))
@@ -304,6 +306,6 @@ function! ZF_GitGetInfo()
         return ret
     endif
 
-    return {}
+    return ret
 endfunction
 
