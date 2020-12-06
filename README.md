@@ -135,8 +135,18 @@ Plugin 'ZSaberLv0/ZFVimGitUtil'
     * `needPwd` : whether need pwd, false by default
     * `confirm` : whether need confirm, true by default
     * `extraInfo` : extra info when confirm, empty by default
+    * `extraChoice` : extra choice options
+
+        ```
+        {
+            'key1' : 'text1',
+            'key2' : 'text2',
+        }
+        ```
 
     return:
+
+    * `choice` : y/extraChoice
     * `git_remoteurl`
     * `git_user_email`
     * `git_user_name`
@@ -151,6 +161,7 @@ Plugin 'ZSaberLv0/ZFVimGitUtil'
     return current git config (see `ZFGitPushQuickly` above)
 
     return:
+
     * `git_remoteurl`
     * `git_user_email`
     * `git_user_name`
