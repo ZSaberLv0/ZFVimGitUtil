@@ -53,6 +53,12 @@ Plugin 'ZSaberLv0/ZFVimGitUtil'
 
     like the name, use with caution
 
+* **NOTE**: github would no longer support plain password push method
+    (`https://YourName:YourPlainPassword@github.com/xxx`),
+    you must use [access token](https://github.com/settings/tokens) for now,
+    [see here](https://github.blog/2020-12-15-token-authentication-requirements-for-git-operations) for more info,
+    and see below for how to use the access token for short
+
 
 # Configs
 
