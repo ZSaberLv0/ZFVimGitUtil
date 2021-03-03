@@ -146,14 +146,14 @@ function! ZF_GitClean_action()
     echo ''
     echo 'choice: '
     let confirm = nr2char(getchar())
-    if confirm != 'y' && confirm != 'Y'
-        if confirm == 'n' || confirm == 'q'
+    if confirm !=# 'y' && confirm !=# 'Y'
+        if confirm ==# 'n' || confirm ==# 'q'
             bdelete!
         endif
         redraw | echo '[ZFGitClean] canceled'
         return
     endif
-    let autoBackup = (confirm != 'Y')
+    let autoBackup = (confirm !=# 'Y')
 
     let toClean = []
     for item in getline(1, '$')
