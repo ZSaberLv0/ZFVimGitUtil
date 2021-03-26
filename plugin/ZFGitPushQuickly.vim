@@ -16,15 +16,15 @@ function! ZF_GitPushQuickly(bang, ...)
     endif
 
     let gitStatus = system('git status')
+    let softPullMode = 0
     if ZF_GitMsgMatch(gitStatus, ZF_GitMsgFormat_containLocalCommits()) >= 0
         let hint = "[ZFGitPushQuickly] WARNING: you have local commits not pushed,"
-        let hint .= "\n    continue quick push may cause these commits lost,"
-        let hint .= "\n    you may want to first resolve it manually by:"
+        let hint .= "\n    continue quick push may cause confused result,"
+        let hint .= "\n    it's adviced to manually operate:"
         let hint .= "\n    * `git push` manually"
         let hint .= "\n    * `git reset origin/<branch>` to undo local commit and try again"
         let hint .= "\n"
-        let hint .= "\nif you are sure remote contains your local commits which not pushed,"
-        let hint .= "\nand really want to continue quick push,"
+        let hint .= "\nif you really know what you are doing,"
         let hint .= "\nenter `got it` to continue: "
         redraw!
         call inputsave()
@@ -35,6 +35,7 @@ function! ZF_GitPushQuickly(bang, ...)
             echo '[ZFGitPushQuickly] canceled'
             return
         endif
+        let softPullMode = 1
     endif
 
     let gitInfo = ZF_GitPrepare({
@@ -42,8 +43,7 @@ function! ZF_GitPushQuickly(bang, ...)
                 \   'needPwd' : 1,
                 \   'confirm' : empty(a:bang) ? 1 : 0,
                 \   'extraInfo' : {
-                \      'repo ' : url,
-                \      'msg  ' : comment,
+                \      'msg' : comment,
                 \   },
                 \   'extraChoice' : {
                 \     'u' : 'p(u)llOnly',
@@ -75,7 +75,7 @@ function! ZF_GitPushQuickly(bang, ...)
 
     call system('git add -A')
     call system('git stash')
-    let branch = substitute(system('git rev-parse --abbrev-ref HEAD'), '[\r\n]', '', 'g')
+    let branch = ZF_GitGetBranch()
     if branch == 'HEAD'
         redraw!
         echo 'unable to parse git branch, maybe in detached HEAD?'
@@ -83,15 +83,25 @@ function! ZF_GitPushQuickly(bang, ...)
     endif
     if empty(branch)
         redraw!
-        echo 'unable to parse git branch'
-        return
+        let branch = input('no branch, enter new branch name to create: ', 'master')
+        redraw!
+        if empty(branch)
+            echo '[ZFGitPushQuickly] canceled'
+            return
+        endif
     endif
     call system('git fetch "' . remoteUrl . '" "+refs/heads/*:refs/remotes/origin/*"')
-    let pullResult = system('git reset --hard origin/' . branch)
-    if ZF_GitMsgMatch(pullResult, ZF_GitMsgFormat_noRemoteBranch()) < 0
-        " pull only if remote branch exists
-        call system('git pull "' . remoteUrl . '" "' . branch . '"')
+
+    if softPullMode
+        let pullResult = system('git pull --rebase "' . remoteUrl . '" "' . branch . '"')
+    else
+        let pullResult = system('git reset --hard origin/' . branch)
+        if ZF_GitMsgMatch(pullResult, ZF_GitMsgFormat_noRemoteBranch()) < 0
+            " pull only if remote branch exists
+            call system('git pull "' . remoteUrl . '" "' . branch . '"')
+        endif
     endif
+
     let stashResult = system('git stash pop')
     let stashResultLines = split(stashResult, "\n")
     let conflictPatterns = ZF_GitMsgFormat_conflict()

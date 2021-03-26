@@ -15,9 +15,6 @@ function! ZF_GitHardRemoveAllHistory()
     let gitInfo = ZF_GitPrepare({
                 \   'module' : 'ZFGitHardRemoveAllHistory',
                 \   'needPwd' : 1,
-                \   'extraInfo' : {
-                \      'repo ' : url,
-                \   },
                 \ })
     if empty(gitInfo)
         return

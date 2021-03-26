@@ -87,18 +87,29 @@ function! ZF_GitPrepare(options)
         if confirm
             redraw!
             echo '[' . module . '] process with these info?'
-            echo '  email : ' . ret.git_user_email
-            echo '  user  : ' . ret.git_user_name
+            let items = [
+                        \   ['repo', ZF_GitGetRemote()],
+                        \   ['branch', ZF_GitGetBranch()],
+                        \   ['', ''],
+                        \   ['email', ret.git_user_email],
+                        \   ['user', ret.git_user_name],
+                        \ ]
             if needPwd
                 let pwdFix = ret.git_user_pwd
                 if len(pwdFix) > 3
                     let pwdFix = strpart(pwdFix, 0, 3) . repeat('*', len(pwdFix) - 3)
                 endif
-                echo '  pwd   : ' . pwdFix
+                call add(items, ['pwd', pwdFix])
             endif
-            for key in keys(extraInfo)
-                echo '  ' . key . ' : ' . extraInfo[key]
-            endfor
+            if !empty(extraInfo)
+                call add(items, ['', ''])
+                for key in keys(extraInfo)
+                    call add(items, [key, extraInfo[key]])
+                endfor
+            endif
+
+            call add(items, ['', ''])
+            call s:alignedEcho(items)
 
             let choiceHint = '(y)es / (n)o / (e)dit'
             if !empty(extraChoice)
@@ -160,6 +171,22 @@ function! ZF_GitPrepare(options)
                 \   'choice' : choice,
                 \ }, ret)
 endfunction
+" [[key0,value0], [key1,value1], ...]
+function! s:alignedEcho(items)
+    let maxKeyLen = 0
+    for item in a:items
+        if len(item[0]) > maxKeyLen
+            let maxKeyLen = len(item[0])
+        endif
+    endfor
+    for item in a:items
+        if empty(item[0]) && empty(item[1])
+            echo ' '
+        else
+            echo '  ' . item[0] . repeat(' ', maxKeyLen - len(item[0])) . ': ' . item[1]
+        endif
+    endfor
+endfunction
 
 function! ZF_GitGetRemote()
     " http:
@@ -173,6 +200,15 @@ function! ZF_GitGetRemote()
     " (?<=origin[ \t]+)[^ \t]+(?=[ \t]+\(push\))
     let url = matchstr(remote, '\%(origin[ \t]\+\)\@<=[^ \t]\+\%([ \t]\+(push)\)\@=')
     return substitute(url, '://.\+@', '://', '')
+endfunction
+
+function! ZF_GitGetBranch()
+    let ret = substitute(system('git rev-parse --abbrev-ref HEAD'), '[\r\n]', '', 'g')
+    if v:shell_error == 0
+        return ret
+    else
+        return ''
+    endif
 endfunction
 
 function! ZF_GitGetRemoteType(remoteUrl)
