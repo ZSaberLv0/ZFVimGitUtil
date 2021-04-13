@@ -149,6 +149,16 @@ function! ZF_GitPushQuickly(bang, ...)
         call system('git reset origin/' . branch)
     endif
     redraw!
+
+    " try to auto update upstream
+    let upstream = system('git rev-parse --abbrev-ref ' . branch . '@{upstream}')
+    if match(upstream, '[a-z]+\/' . branch) < 0
+        " git 1.8.0 or above
+        call system('git branch --set-upstream-to=origin/' . branch . ' ' . branch)
+        " git 1.7 or below
+        call system('git branch --set-upstream ' . branch . ' origin/' . branch)
+    endif
+
     " strip password
     let pushResult = substitute(pushResult, ':[^:]*@', '@', 'g')
     echo pushResult

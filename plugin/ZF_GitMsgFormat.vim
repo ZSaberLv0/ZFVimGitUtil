@@ -1,4 +1,9 @@
 
+" ============================================================
+" see:
+"   https://github.com/git/git/tree/master/po
+" ============================================================
+
 "Your branch is ahead of '%s' by %d commit.\n"
 "Your branch is ahead of '%s' by %d commits.\n"
 function! ZF_GitMsgFormat_containLocalCommits()
