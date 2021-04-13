@@ -93,7 +93,7 @@ function! ZF_GitPushQuickly(bang, ...)
     call system('git fetch "' . remoteUrl . '" "+refs/heads/*:refs/remotes/origin/*"')
 
     if softPullMode
-        let pullResult = system('git pull --rebase "' . remoteUrl . '" "' . branch . '"')
+        let pullResult = system('git pull "' . remoteUrl . '" "' . branch . '"')
     else
         let pullResult = system('git reset --hard origin/' . branch)
         if ZF_GitMsgMatch(pullResult, ZF_GitMsgFormat_noRemoteBranch()) < 0
