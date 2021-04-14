@@ -6,6 +6,21 @@ function! ZF_GitPushQuickly(bang, ...)
         let comment = get(g:, 'ZFGitPushQuickly_defaultMsg', 'update')
     endif
 
+    let gitInfo = ZF_GitPrepare({
+                \   'module' : 'ZFGitPushQuickly',
+                \   'needPwd' : 1,
+                \   'confirm' : empty(a:bang) ? 1 : 0,
+                \   'extraInfo' : {
+                \      'msg' : comment,
+                \   },
+                \   'extraChoice' : {
+                \     'u' : 'p(u)llOnly',
+                \   },
+                \ })
+    if empty(gitInfo)
+        return
+    endif
+
     let url = ZF_GitGetRemote()
     if empty(url)
         echo 'unable to parse remote url'
@@ -36,21 +51,6 @@ function! ZF_GitPushQuickly(bang, ...)
             return
         endif
         let softPullMode = 1
-    endif
-
-    let gitInfo = ZF_GitPrepare({
-                \   'module' : 'ZFGitPushQuickly',
-                \   'needPwd' : 1,
-                \   'confirm' : empty(a:bang) ? 1 : 0,
-                \   'extraInfo' : {
-                \      'msg' : comment,
-                \   },
-                \   'extraChoice' : {
-                \     'u' : 'p(u)llOnly',
-                \   },
-                \ })
-    if empty(gitInfo)
-        return
     endif
 
     if gitInfo.git_remotetype != 'ssh'
