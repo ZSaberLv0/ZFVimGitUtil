@@ -86,7 +86,6 @@ function! ZF_GitPrepare(options)
 
         if confirm
             redraw!
-            echo '[' . module . '] process with these info?'
             let items = [
                         \   ['repo', ZF_GitGetRemote()],
                         \   ['branch', ZF_GitGetBranch()],
@@ -108,6 +107,7 @@ function! ZF_GitPrepare(options)
                 endfor
             endif
 
+            echo '[' . module . '] process with these info?'
             call add(items, ['', ''])
             call s:alignedEcho(items)
 
