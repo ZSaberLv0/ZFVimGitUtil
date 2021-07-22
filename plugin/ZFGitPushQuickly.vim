@@ -74,7 +74,12 @@ function! ZF_GitPushQuickly(bang, ...)
     endfor
 
     call system('git add -A')
-    call system('git stash')
+    let stashResult = system('git stash')
+    if exists('v:shell_error') && v:shell_error != 0
+        redraw!
+        echo 'unable to stash: ' . stashResult
+        return
+    endif
     let branch = ZF_GitGetBranch()
     if branch == 'HEAD'
         redraw!
