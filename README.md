@@ -49,6 +49,11 @@ Plugin 'ZSaberLv0/ZFVimGitUtil'
     fill a temp file with untracked and ignored files,
     save the temp file to remove all of these files
 
+* `ZFGitStatus`
+
+    find and go through all git repo under cwd,
+    echo its changes by `git status -s`
+
 * `ZFGitHardRemoveAllHistory`
 
     like the name, use with caution
