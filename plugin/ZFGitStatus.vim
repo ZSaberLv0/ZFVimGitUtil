@@ -1,8 +1,10 @@
 
 function! ZF_GitStatus()
+    redraw | echo '[ZFGitStatus] checking'
+
     let paths = split(glob('**/.git', 1), "\n")
     if empty(paths)
-        echo '[ZFGitStatus] no changes'
+        redraw | echo '[ZFGitStatus] no changes'
         return []
     endif
 
@@ -21,7 +23,7 @@ function! ZF_GitStatus()
     endfor
 
     if empty(changes)
-        echo '[ZFGitStatus] no changes'
+        redraw | echo '[ZFGitStatus] no changes'
         return []
     endif
 
@@ -32,7 +34,7 @@ function! ZF_GitStatus()
             let hint .= '      ' . item . "\n"
         endfor
     endfor
-    echo hint
+    redraw | echo hint
     return changes
 endfunction
 command! -nargs=0 ZFGitStatus :call ZF_GitStatus()
