@@ -107,30 +107,30 @@ function! ZF_GitPushQuickly(bang, ...)
         endif
     endif
 
-    let stashResult = system('git stash pop')
-    let stashResultLines = split(stashResult, "\n")
-    let conflictPatterns = ZF_GitMsgFormat_conflict()
-    for stashResultLine in stashResultLines
-        if ZF_GitMsgMatch(stashResultLine, conflictPatterns) >= 0
-            call s:openConflictFiles(stashResultLines)
+    call system('git stash pop')
+    let stashResult = split(system('git status -s'), "\n")
+    let conflictFiles = []
+    if s:openConflictFiles(stashResult, conflictFiles) > 0
+        " <<<<<<< Updated upstream
+        " content A
+        " =======
+        " content B
+        " >>>>>>> Stashed changes
+        "
+        " ^<<<<<<<+ .*$|^=======+$|^>>>>>>>+ .*$
+        let @/ = '^<<<<<<<\+ .*$\|^=======\+$\|^>>>>>>>\+ .*$'
+        call histadd('/', @/)
+        normal! ggnzz
 
-            " <<<<<<< Updated upstream
-            " content A
-            " =======
-            " content B
-            " >>>>>>> Stashed changes
-            "
-            " ^<<<<<<<+ .*$|^=======+$|^>>>>>>>+ .*$
-            let @/ = '^<<<<<<<\+ .*$\|^=======\+$\|^>>>>>>>\+ .*$'
-            normal! ggnzz
-
-            redraw!
-            echo stashResult
-            call system('git stash drop')
-            call system('git reset')
-            return
-        endif
-    endfor
+        redraw!
+        echo 'CONFLICTS:'
+        for conflictFile in conflictFiles
+            echo '    ' . conflictFile
+        endfor
+        call system('git stash drop')
+        call system('git reset')
+        return
+    endif
 
     if gitInfo.choice == 'u'
         call system('git reset HEAD')
@@ -200,15 +200,20 @@ function! ZF_GitMsgMatch(text, patterns)
     return -1
 endfunction
 
-function! s:openConflictFiles(stashResultLines)
-    let matcherList = ZF_GitMsgFormat_conflictFileMatcher()
-    for line in split(system('git status'), "\n")
-        for matcher in matcherList
-            let file = substitute(line, matcher[0], matcher[1], '')
-            if !empty(file) && filereadable(file)
-                execute 'edit ' . substitute(file, ' ', '\\ ', 'g')
-            endif
-        endfor
+function! s:openConflictFiles(stashResult, conflictFiles)
+    let ret = 0
+    for line in a:stashResult
+        " ^[ \t]*UU[ \t]+
+        if match(line, '^[ \t]*UU[ \t]\+') < 0
+            continue
+        endif
+        let file = substitute(line, '^[ \t]*UU[ \t]\+', '', '')
+        if !empty(file) && filereadable(file)
+            call add(a:conflictFiles, file)
+            execute 'edit ' . substitute(file, ' ', '\\ ', 'g')
+            let ret += 1
+        endif
     endfor
+    return ret
 endfunction
 
