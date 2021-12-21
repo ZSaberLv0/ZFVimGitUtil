@@ -28,7 +28,7 @@ function! ZF_GitStatus()
     endif
 
     let hint = "[ZFGitStatus] changes:\n"
-    for path in sort(keys(changes), 'i')
+    for path in sort(keys(changes), 1)
         let hint .= "\n  " . path . "/\n"
         for item in changes[path]
             let hint .= '      ' . item . "\n"

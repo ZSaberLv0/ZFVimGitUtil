@@ -108,9 +108,9 @@ function! ZF_GitPushQuickly(bang, ...)
     endif
 
     call system('git stash pop')
-    let stashResult = split(system('git status -s'), "\n")
+    let stashResult = system('git status -s')
     let conflictFiles = []
-    if s:openConflictFiles(stashResult, conflictFiles) > 0
+    if s:openConflictFiles(split(stashResult, "\n"), conflictFiles) > 0
         " <<<<<<< Updated upstream
         " content A
         " =======
