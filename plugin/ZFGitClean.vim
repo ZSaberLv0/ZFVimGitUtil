@@ -186,10 +186,14 @@ function! s:cleanFileOrDir(fileOrDir, autoBackup)
         if a:autoBackup
             call s:tryBackup(a:fileOrDir)
         endif
+        call system('git reset HEAD "' . a:fileOrDir . '"')
         call system('git checkout "' . a:fileOrDir . '"')
     elseif exists("b:ZFGitCleanInfo['untracked'][a:fileOrDir]") || exists("b:ZFGitCleanInfo['ignored'][a:fileOrDir]")
         if a:autoBackup
             call s:tryBackup(a:fileOrDir)
+        endif
+        if exists("b:ZFGitCleanInfo['untracked'][a:fileOrDir]")
+            call system('git reset HEAD "' . a:fileOrDir . '"')
         endif
         if has('win32') || has('win64')
             call system('del /f/q "' . substitute(a:fileOrDir, '/', '\\', 'g') . '"')
