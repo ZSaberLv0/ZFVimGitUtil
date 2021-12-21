@@ -22,39 +22,43 @@ command! -nargs=0 ZFGitClean :call ZF_GitClean()
 "   'ignored' : {},
 " }
 function! ZF_GitCleanInfo()
-    " \tmodified:   path/file
-    " \tdeleted:    path/file
     let modified = {}
     let deleted = {}
-    for item in split(s:runGitCmd('status'), "\n")
-        if 0
-        elseif match(item, '^\tmodified: \+') >= 0
-            " ^\tmodified: +
-            let modified[substitute(item, '^\tmodified: \+', '', '')] = 1
-        elseif match(item, '^\tdeleted: \+') >= 0
-            " ^\tdeleted: +
-            let deleted[substitute(item, '^\tdeleted: \+', '', '')] = 1
-        endif
-    endfor
-
-    " Would remove path/xxx
-    let ignoredMap = {}
-    let ignored = {}
-    for item in split(s:runGitCmd('clean -d -n -X'), "\n")
-        if match(item, '^Would remove') < 0
-            continue
-        endif
-        let ignored[substitute(item, '^Would remove ', '', '')] = 1
-        let ignoredMap[item] = 1
-    endfor
-
     let untracked = {}
-    for item in split(s:runGitCmd('clean -d -n -x'), "\n")
-        if match(item, '^Would remove') < 0
-                    \ || get(ignoredMap, item, 0)
+    let ignored = {}
+
+    " https://git-scm.com/docs/git-status#_short_format
+    for item in split(s:runGitCmd('status -s --ignored'), "\n")
+        if strlen(item) <= 4
             continue
         endif
-        let untracked[substitute(item, '^Would remove ', '', '')] = 1
+        let X = item[0]
+        let Y = item[1]
+
+        let file = strpart(item, 3)
+        " [ \t]->[ \t].*
+        let file = substitute(file, '[ \t]->[ \t].*', '', '')
+        " ^[ \t]*"
+        let file = substitute(file, '^[ \t]*"', '', '')
+        " "[ \t]*$
+        let file = substitute(file, '"[ \t]*$', '', '')
+
+        if 0
+        elseif 0
+                    \ || (X == '!' || Y == '!')
+            let ignored[file] = 1
+        elseif 0
+                    \ || (X == 'D')
+                    \ || (Y == 'D' && X != 'U')
+            let deleted[file] = 1
+        elseif 0
+                    \ || (X == '?' || Y == '?')
+                    \ || (X == 'A')
+                    \ || (Y == 'A' && X =~# '[ A]')
+            let untracked[file] = 1
+        else
+            let modified[file] = 1
+        endif
     endfor
 
     return {
