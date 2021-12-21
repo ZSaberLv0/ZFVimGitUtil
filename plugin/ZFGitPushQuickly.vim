@@ -213,22 +213,31 @@ function! s:openConflictFiles(stashResult, conflictFiles)
         endif
         let file = substitute(line, '^[ \t]*\(U.\|.U\)[ \t]\+', '', '')
 
-        " [ \t]+->[ \t]+.*
-        "     abc -> xyz
-        "     abc
-        let file = substitute(file, '[ \t]\+->[ \t]\+.*', '', '')
-
-        " ^[ \t]*"
-        let file = substitute(file, '^[ \t]*"', '', '')
-        " "[ \t]*$
-        let file = substitute(file, '"[ \t]*$', '', '')
-
-        if !empty(file) && filereadable(file)
-            call add(a:conflictFiles, file)
-            execute 'edit ' . substitute(file, ' ', '\\ ', 'g')
-            let ret += 1
+        " [ \t]+->[ \t]+
+        if match(file, '[ \t]\+->[ \t]\+') >= 0
+            let ret += s:openConflictFile(substitute(file, '[ \t]\+->[ \t]\+.*', '', ''), a:conflictFiles)
+            let ret += s:openConflictFile(substitute(file, '.*[ \t]\+->[ \t]\+', '', ''), a:conflictFiles)
+        else
+            let ret += s:openConflictFile(file, a:conflictFiles)
         endif
     endfor
     return ret
+endfunction
+
+function! s:openConflictFile(file, conflictFiles)
+    let file = a:file
+
+    " ^[ \t]*"
+    let file = substitute(file, '^[ \t]*"', '', '')
+    " "[ \t]*$
+    let file = substitute(file, '"[ \t]*$', '', '')
+
+    if !empty(file) && filereadable(file)
+        call add(a:conflictFiles, file)
+        execute 'edit ' . substitute(file, ' ', '\\ ', 'g')
+        return 1
+    else
+        return 0
+    endif
 endfunction
 
