@@ -202,12 +202,27 @@ endfunction
 
 function! s:openConflictFiles(stashResult, conflictFiles)
     let ret = 0
+    " https://git-scm.com/docs/git-status#_short_format
+    "
+    " XY PATH
+    " XY ORIG_PATH -> PATH
     for line in a:stashResult
-        " ^[ \t]*UU[ \t]+
-        if match(line, '^[ \t]*UU[ \t]\+') < 0
+        " ^[ \t]*(U.|.U)[ \t]+
+        if match(line, '^[ \t]*\(U.\|.U\)[ \t]\+') < 0
             continue
         endif
-        let file = substitute(line, '^[ \t]*UU[ \t]\+', '', '')
+        let file = substitute(line, '^[ \t]*\(U.\|.U\)[ \t]\+', '', '')
+
+        " [ \t]+->[ \t]+.*
+        "     abc -> xyz
+        "     abc
+        let file = substitute(file, '[ \t]\+->[ \t]\+.*', '', '')
+
+        " ^[ \t]*"
+        let file = substitute(file, '^[ \t]*"', '', '')
+        " "[ \t]*$
+        let file = substitute(file, '"[ \t]*$', '', '')
+
         if !empty(file) && filereadable(file)
             call add(a:conflictFiles, file)
             execute 'edit ' . substitute(file, ' ', '\\ ', 'g')
