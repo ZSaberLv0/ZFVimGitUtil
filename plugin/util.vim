@@ -189,16 +189,8 @@ function! s:alignedEcho(items)
 endfunction
 
 function! ZF_GitGetRemote()
-    " http:
-    "   origin\thttps://github.com/xxx/xxx (fetch)
-    "   origin\thttps://github.com/xxx/xxx (push)
-    "
-    " ssh:
-    "   origin  root@192.168.xx.xx:/path/sample (fetch)
-    "   origin  root@192.168.xx.xx:/path/sample (push)
-    let remote = system('git remote -v')
-    " (?<=origin[ \t]+)[^ \t]+(?=[ \t]+\(push\))
-    let url = matchstr(remote, '\%(origin[ \t]\+\)\@<=[^ \t]\+\%([ \t]\+(push)\)\@=')
+    let url = system('git remote get-url --all origin')
+    let url = substitute(url, '[\r\n]', '', 'g')
     return substitute(url, '://.\+@', '://', '')
 endfunction
 
