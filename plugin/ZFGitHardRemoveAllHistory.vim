@@ -53,7 +53,10 @@ function! ZF_GitHardRemoveAllHistory()
     let pushResult = system(cmd)
     let pushResult = substitute(pushResult, ':[^:]*@', '@', 'g')
     redraw!
+    let moreSaved = &more
+    set nomore
     echo pushResult
+    let &more = moreSaved
 endfunction
 command! -nargs=0 ZFGitHardRemoveAllHistory :call ZF_GitHardRemoveAllHistory()
 
