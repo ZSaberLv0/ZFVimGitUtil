@@ -199,7 +199,7 @@ function! s:cleanFileOrDir(fileOrDir, autoBackup)
         if exists("b:ZFGitCleanInfo['untracked'][a:fileOrDir]")
             call system('git reset HEAD "' . a:fileOrDir . '"')
         endif
-        if has('win32') || has('win64')
+        if has('windows')
             call system('del /f/q "' . substitute(a:fileOrDir, '/', '\\', 'g') . '"')
             call system('rmdir /s/q "' . substitute(a:fileOrDir, '/', '\\', 'g') . '"')
         else
