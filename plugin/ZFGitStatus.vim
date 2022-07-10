@@ -35,6 +35,7 @@ function! ZF_GitStatus()
         endfor
     endfor
     redraw | echo hint
+    let @t = hint
     return changes
 endfunction
 command! -nargs=0 ZFGitStatus :call ZF_GitStatus()
