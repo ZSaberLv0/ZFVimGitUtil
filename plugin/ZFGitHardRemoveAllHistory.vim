@@ -35,7 +35,7 @@ function! ZF_GitHardRemoveAllHistory()
     call system('git config user.email "' . gitInfo.git_user_email . '"')
     call system('git config user.name "' . gitInfo.git_user_name . '"')
 
-    if has('windows')
+    if (has('win32') || has('win64')) && !has('unix')
         let cmd = '"' . s:scriptPath . 'git_hard_remove_all_history.bat' . '"'
     else
         let cmd = 'sh "' . s:scriptPath . 'git_hard_remove_all_history.sh' . '"'
