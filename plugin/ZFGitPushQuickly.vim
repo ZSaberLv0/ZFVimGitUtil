@@ -18,16 +18,16 @@ function! ZF_GitPushQuickly(bang, ...)
                 \   },
                 \ })
     if empty(gitInfo)
-        return
+        return 'not git repo or canceled'
     endif
 
     let url = ZF_GitGetRemote()
     if empty(url)
         echo 'unable to parse remote url'
-        return
+        return 'unable to parse remote url'
     endif
     if ZF_GitCheckSsh(url)
-        return
+        return 'ssh repo without ssh key'
     endif
 
     let gitStatus = system('git status')
@@ -48,7 +48,7 @@ function! ZF_GitPushQuickly(bang, ...)
         if input != 'got it'
             redraw!
             echo '[ZFGitPushQuickly] canceled'
-            return
+            return 'canceled'
         endif
         let softPullMode = 1
     endif
@@ -78,13 +78,13 @@ function! ZF_GitPushQuickly(bang, ...)
     if exists('v:shell_error') && v:shell_error != 0
         redraw!
         echo 'unable to stash: ' . stashResult
-        return
+        return 'unable to stash: ' . stashResult
     endif
     let branch = ZF_GitGetBranch()
     if branch == 'HEAD'
         redraw!
         echo 'unable to parse git branch, maybe in detached HEAD?'
-        return
+        return 'unable to parse git branch, maybe in detached HEAD?'
     endif
     if empty(branch)
         redraw!
@@ -92,7 +92,7 @@ function! ZF_GitPushQuickly(bang, ...)
         redraw!
         if empty(branch)
             echo '[ZFGitPushQuickly] canceled'
-            return
+            return 'canceled'
         endif
     endif
     call system('git fetch "' . remoteUrl . '" "+refs/heads/*:refs/remotes/origin/*"')
@@ -123,22 +123,23 @@ function! ZF_GitPushQuickly(bang, ...)
         normal! ggnzz
 
         redraw!
-        echo 'CONFLICTS:'
+        let msg = 'CONFLICTS:'
         for conflictFile in conflictFiles
-            echo '    ' . conflictFile
+            let msg .= "\n" . '    ' . conflictFile
         endfor
+        echo msg
         call system('git stash drop')
         call system('git reset')
-        return
+        return msg
     endif
 
     if gitInfo.choice == 'u'
         call system('git reset HEAD')
         redraw!
-        echo pullResult
-        echo "\n"
-        echo system('git show -s --format=%B')
-        return
+        let msg = pullResult
+        let msg .= "\n" . system('git show -s --format=%B')
+        echo msg
+        return msg
     endif
 
     redraw!
@@ -167,29 +168,9 @@ function! ZF_GitPushQuickly(bang, ...)
     " strip password
     let pushResult = substitute(pushResult, ':[^:]*@', '@', 'g')
     echo pushResult
+    return pushResult
 endfunction
 command! -nargs=? -bang ZFGitPushQuickly :call ZF_GitPushQuickly(<q-bang>, <q-args>)
-
-function! ZF_GitPushAllQuickly(gitRepoDirs, ...)
-    let msg = get(a:, 1, 'update')
-    let oldDir = getcwd()
-    try
-        redir => result
-        for dir in a:gitRepoDirs
-            silent execute 'cd ' . dir
-            silent execute 'ZFGitPushQuickly! ' . msg
-        endfor
-    finally
-        redir END
-    endtry
-    execute 'cd ' . oldDir
-    redraw!
-    echo result
-    if has('clipboard')
-        let @* = result
-    endif
-    let @" = result
-endfunction
 
 function! ZF_GitMsgMatch(text, patterns)
     for i in range(len(a:patterns))

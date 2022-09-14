@@ -16,7 +16,7 @@ Plugin 'ZSaberLv0/ZFVimGitUtil'
 
 # Main Feature
 
-* `ZFGitPushQuickly`
+* `:ZFGitPushQuickly[!] [comment]`
 
     "stash > pull  > unstash > commit > push" quickly
 
@@ -44,17 +44,22 @@ Plugin 'ZSaberLv0/ZFVimGitUtil'
 
             `git fetch --all`, if fetch success without password required, then you are done
 
-* `ZFGitClean`
+* `:ZFGitBatchPush [comment]`
+
+    find and go through all git repo under cwd,
+    and try to push
+
+* `:ZFGitClean`
 
     fill a temp file with untracked and ignored files,
     save the temp file to remove all of these files
 
-* `ZFGitStatus`
+* `:ZFGitStatus`
 
     find and go through all git repo under cwd,
     echo its changes by `git status -s`
 
-* `ZFGitHardRemoveAllHistory`
+* `:ZFGitHardRemoveAllHistory`
 
     like the name, use with caution
 
@@ -177,8 +182,4 @@ Plugin 'ZSaberLv0/ZFVimGitUtil'
     * `git_user_email`
     * `git_user_name`
     * `git_user_pwd`
-
-* `ZF_GitPushAllQuickly(gitRepoDirs[, msg])`
-
-    push multiple repo
 
