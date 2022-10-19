@@ -1,5 +1,13 @@
 
-function! ZFGitBatchPull()
+" option: {
+"   'clean' : 0/1, // whether auto clean repo, default: 0
+"   'gc' : 0/1, // whether auto perform git gc, default: 1 if clean==1
+" }
+function! ZFGitBatchPull(...)
+    let option = get(a:, 1, {})
+    let clean = get(option, 'clean', 0)
+    let gc = get(option, 'gc', clean)
+
     redraw | echo '[ZFGitBatchPull] checking repos under current dir'
     silent! let changes = ZFGitStatus({
                 \   'all' : 1,
@@ -32,6 +40,12 @@ function! ZFGitBatchPull()
         let taskSuccess = 1
         try
             execute 'cd ' . substitute(path, ' ', '\\ ', 'g')
+            if clean
+                silent! call ZFGitCleanRun(ZFGitCleanInfo())
+            endif
+            if gc
+                call system('git gc --aggressive')
+            endif
             let taskHint = ZFGitPushQuickly('u')
         catch
             let taskHint = printf('%s', v:exception)
@@ -54,5 +68,5 @@ function! ZFGitBatchPull()
     echo pullHintText
     return changes
 endfunction
-command! -nargs=0 ZFGitBatchPull :call ZFGitBatchPull()
+command! -nargs=* ZFGitBatchPull :call ZFGitBatchPull(<args>)
 

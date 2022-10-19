@@ -142,7 +142,8 @@ function! ZFGitPushQuickly(bang, ...)
     if gitInfo.choice == 'u'
         call system('git reset HEAD')
         redraw!
-        let msg = pullResult
+        let msg = 'REPO: ' . url
+        let msg .= "\n" . pullResult
         let msg .= "\n" . system('git show -s --format=%B')
         echo msg
         return msg
@@ -171,6 +172,7 @@ function! ZFGitPushQuickly(bang, ...)
         call system('git branch --set-upstream ' . branch . ' origin/' . branch)
     endif
 
+    let pushResult = printf("REPO: %s\n%s", url, pushResult)
     " strip password
     let pushResult = substitute(pushResult, ':[^:]*@', '@', 'g')
     echo pushResult

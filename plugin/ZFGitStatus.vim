@@ -1,6 +1,6 @@
 
 " option: {
-"   'all' : 'whether include repo which has no changes',
+"   'all' : 0/1, // whether include repo which has no changes, default: 0
 " }
 function! ZFGitStatus(...)
     let option = get(a:, 1, {})

@@ -69,6 +69,25 @@ function! ZFGitCleanInfo()
                 \ }
 endfunction
 
+" option: {
+"   'backup' : 1/0, // whether auto backup, default: 1
+" }
+function! ZFGitCleanRun(cleanInfo, ...)
+    let option = get(a:, 1, {})
+    let autoBackup = get(option, 'backup', 1)
+    for type in keys(a:cleanInfo)
+        let toClean = keys(a:cleanInfo[type])
+        let i = 0
+        let iEnd = len(toClean)
+        while i < iEnd
+            redraw | echo '[ZFGitClean] (' . (i+1) . '/' . iEnd . ') cleanup: ' . fnamemodify(toClean[i], ':t')
+            call s:cleanFileOrDir(a:cleanInfo, toClean[i], autoBackup)
+            let i += 1
+        endwhile
+    endfor
+endfunction
+
+" ============================================================
 function! s:runGitCmd(cmd)
     return system('git -c "core.quotepath=false" ' . a:cmd)
 endfunction
@@ -135,10 +154,15 @@ function! s:setupBuffer(cleanInfo, lines)
     setlocal foldignore=
     setlocal foldlevel=128
     let b:ZFGitCleanInfo = a:cleanInfo
-    nnoremap <buffer><silent> q :call ZFGitClean_action()<cr>
+    nnoremap <buffer><silent> q :call ZF_GitClean_action()<cr>
 endfunction
 
-function! ZFGitClean_action()
+function! ZF_GitClean_action()
+    if !exists('b:ZFGitCleanInfo')
+        redraw | echo '[ZFGitClean] invalid state'
+        return
+    endif
+
     redraw!
     echo '[ZFGitClean] perform cleanup?'
     if exists('*ZFBackupSave')
@@ -176,7 +200,7 @@ function! ZFGitClean_action()
     let iEnd = len(toClean)
     while i < iEnd
         redraw | echo '[ZFGitClean] (' . (i+1) . '/' . iEnd . ') cleanup: ' . fnamemodify(toClean[i], ':t')
-        call s:cleanFileOrDir(toClean[i], autoBackup)
+        call s:cleanFileOrDir(b:ZFGitCleanInfo, toClean[i], autoBackup)
         let i += 1
     endwhile
 
@@ -184,19 +208,19 @@ function! ZFGitClean_action()
     ZFGitClean
 endfunction
 
-function! s:cleanFileOrDir(fileOrDir, autoBackup)
+function! s:cleanFileOrDir(cleanInfo, fileOrDir, autoBackup)
     if 0
-    elseif exists("b:ZFGitCleanInfo['modified'][a:fileOrDir]") || exists("b:ZFGitCleanInfo['deleted'][a:fileOrDir]")
+    elseif exists("a:cleanInfo['modified'][a:fileOrDir]") || exists("a:cleanInfo['deleted'][a:fileOrDir]")
         if a:autoBackup
             call s:tryBackup(a:fileOrDir)
         endif
         call system('git reset HEAD "' . a:fileOrDir . '"')
         call system('git checkout "' . a:fileOrDir . '"')
-    elseif exists("b:ZFGitCleanInfo['untracked'][a:fileOrDir]") || exists("b:ZFGitCleanInfo['ignored'][a:fileOrDir]")
+    elseif exists("a:cleanInfo['untracked'][a:fileOrDir]") || exists("a:cleanInfo['ignored'][a:fileOrDir]")
         if a:autoBackup
             call s:tryBackup(a:fileOrDir)
         endif
-        if exists("b:ZFGitCleanInfo['untracked'][a:fileOrDir]")
+        if exists("a:cleanInfo['untracked'][a:fileOrDir]")
             call system('git reset HEAD "' . a:fileOrDir . '"')
         endif
         if (has('win32') || has('win64')) && !has('unix')
