@@ -8,17 +8,7 @@ function! ZFGitBatchPull(...)
     let clean = get(option, 'clean', 0)
     let gc = get(option, 'gc', clean)
 
-    redraw | echo '[ZFGitBatchPull] checking repos under current dir'
-    silent! let changes = ZFGitStatus({
-                \   'all' : 1,
-                \ })
-    if empty(changes)
-        redraw | echo '[ZFGitBatchPull] no repos'
-        return []
-    endif
-
     redraw!
-
     let hint = "[ZFGitBatchPull] try to pull all repos under current dir using default config"
     let hint .= "\n"
     let hint .= "\nif you really know what you are doing,"
@@ -30,6 +20,15 @@ function! ZFGitBatchPull(...)
         redraw!
         echo '[ZFGitBatchPull] canceled'
         return
+    endif
+
+    redraw! | echo '[ZFGitBatchPull] checking repos under current dir'
+    silent! let changes = ZFGitStatus({
+                \   'all' : 1,
+                \ })
+    if empty(changes)
+        redraw | echo '[ZFGitBatchPull] no repos'
+        return []
     endif
 
     let pwdSaved = getcwd()
