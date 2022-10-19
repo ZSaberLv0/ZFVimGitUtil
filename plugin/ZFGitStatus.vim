@@ -1,6 +1,10 @@
 
+" option: {
+"   'all' : 'whether include repo which has no changes',
+" }
 function! ZFGitStatus(...)
-    let checkAll = get(a:, 1, 0)
+    let option = get(a:, 1, {})
+    let all = get(option, 'all', 0)
 
     redraw | echo '[ZFGitStatus] checking'
 
@@ -20,7 +24,7 @@ function! ZFGitStatus(...)
         endif
 
         let change = split(system('cd "' . path . '"&& git status -s'), "\n")
-        if checkAll || !empty(change)
+        if all || !empty(change)
             if !empty(change)
                 let hasChanges = 1
             endif

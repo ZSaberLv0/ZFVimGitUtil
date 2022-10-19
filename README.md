@@ -44,6 +44,11 @@ Plugin 'ZSaberLv0/ZFVimGitUtil'
 
             `git fetch --all`, if fetch success without password required, then you are done
 
+* `:ZFGitBatchPull`
+
+    find and go through all git repo under cwd,
+    and try to pull
+
 * `:ZFGitBatchPush [comment]`
 
     find and go through all git repo under cwd,
