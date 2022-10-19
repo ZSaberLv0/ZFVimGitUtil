@@ -136,12 +136,12 @@ Plugin 'ZSaberLv0/ZFVimGitUtil'
 
 # Functions
 
-* `ZF_GitPwdSet(git_remoteurl, git_user_name, git_user_pwd)`
+* `ZFGitPwdSet(git_remoteurl, git_user_name, git_user_pwd)`
 
     update the password stored by `ZFGitPushQuickly`,
     set empty `git_user_pwd` to remove saved password
 
-* `ZF_GitPrepare(options)`
+* `ZFGitPrepare(options)`
 
     prepare necessary git info
 
@@ -168,11 +168,11 @@ Plugin 'ZSaberLv0/ZFVimGitUtil'
     * `git_user_name`
     * `git_user_pwd`
 
-* `ZF_GitGetRemote()`
+* `ZFGitGetRemote()`
 
     parse git remote url
 
-* `ZF_GitGetInfo()`
+* `ZFGitGetInfo()`
 
     return current git config (see `ZFGitPushQuickly` above)
 

@@ -2,17 +2,17 @@
 let s:scriptPath = expand('<sfile>:p:h:h') . '/misc/'
 
 " hard remove all history of git repo
-function! ZF_GitHardRemoveAllHistory()
-    let url = ZF_GitGetRemote()
+function! ZFGitHardRemoveAllHistory()
+    let url = ZFGitGetRemote()
     if empty(url)
         echo 'unable to parse remote url'
         return
     endif
-    if ZF_GitCheckSsh(url)
+    if ZFGitCheckSsh(url)
         return
     endif
 
-    let gitInfo = ZF_GitPrepare({
+    let gitInfo = ZFGitPrepare({
                 \   'module' : 'ZFGitHardRemoveAllHistory',
                 \   'needPwd' : 1,
                 \ })
@@ -58,5 +58,5 @@ function! ZF_GitHardRemoveAllHistory()
     echo pushResult
     let &more = moreSaved
 endfunction
-command! -nargs=0 ZFGitHardRemoveAllHistory :call ZF_GitHardRemoveAllHistory()
+command! -nargs=0 ZFGitHardRemoveAllHistory :call ZFGitHardRemoveAllHistory()
 

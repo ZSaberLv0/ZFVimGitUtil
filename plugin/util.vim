@@ -1,15 +1,15 @@
 
-let s:ZF_GitPrepare_savedPwd = {}
-let s:ZF_GitPrepare_savedPwdPredict = {}
+let s:ZFGitPrepare_savedPwd = {}
+let s:ZFGitPrepare_savedPwdPredict = {}
 
 " store temporary git password
-function! ZF_GitPwdSet(git_remoteurl, git_user_name, git_user_pwd)
+function! ZFGitPwdSet(git_remoteurl, git_user_name, git_user_pwd)
     if empty(git_user_pwd)
-        unlet s:ZF_GitPrepare_savedPwd[git_user_name . ':' . git_remoteurl]
-        unlet s:ZF_GitPrepare_savedPwdPredict[git_user_name]
+        unlet s:ZFGitPrepare_savedPwd[git_user_name . ':' . git_remoteurl]
+        unlet s:ZFGitPrepare_savedPwdPredict[git_user_name]
     else
-        let s:ZF_GitPrepare_savedPwd[git_user_name . ':' . git_remoteurl] = git_user_pwd
-        let s:ZF_GitPrepare_savedPwdPredict[git_user_name] = git_user_pwd
+        let s:ZFGitPrepare_savedPwd[git_user_name . ':' . git_remoteurl] = git_user_pwd
+        let s:ZFGitPrepare_savedPwdPredict[git_user_name] = git_user_pwd
     endif
 endfunction
 
@@ -29,13 +29,13 @@ endfunction
 "   git_user_email
 "   git_user_name
 "   git_user_pwd
-function! ZF_GitPrepare(options)
+function! ZFGitPrepare(options)
     let module = get(a:options, 'module', 'ZFGit')
     let needPwd = get(a:options, 'needPwd', 0)
     let confirm = get(a:options, 'confirm', 1)
     let extraInfo = get(a:options, 'extraInfo', {})
     let extraChoice = get(a:options, 'extraChoice', {})
-    let ret = ZF_GitGetInfo()
+    let ret = ZFGitGetInfo()
     if empty(ret)
         return {}
     endif
@@ -45,9 +45,9 @@ function! ZF_GitPrepare(options)
     endif
 
     if !empty(ret.git_user_name)
-        let ret.git_user_pwd = get(s:ZF_GitPrepare_savedPwd, ret.git_user_name . ':' . ret.git_remoteurl, ret.git_user_pwd)
+        let ret.git_user_pwd = get(s:ZFGitPrepare_savedPwd, ret.git_user_name . ':' . ret.git_remoteurl, ret.git_user_pwd)
         if empty(ret.git_user_pwd)
-            let ret.git_user_pwd = get(s:ZF_GitPrepare_savedPwdPredict, ret.git_user_name, ret.git_user_pwd)
+            let ret.git_user_pwd = get(s:ZFGitPrepare_savedPwdPredict, ret.git_user_name, ret.git_user_pwd)
         endif
     endif
     let reInput = 0
@@ -87,8 +87,8 @@ function! ZF_GitPrepare(options)
         if confirm
             redraw!
             let items = [
-                        \   ['repo', ZF_GitGetRemote()],
-                        \   ['branch', ZF_GitGetBranch()],
+                        \   ['repo', ZFGitGetRemote()],
+                        \   ['branch', ZFGitGetBranch()],
                         \   ['', ''],
                         \   ['email', ret.git_user_email],
                         \   ['user', ret.git_user_name],
@@ -163,8 +163,8 @@ function! ZF_GitPrepare(options)
     endif
 
     if needPwd
-        let s:ZF_GitPrepare_savedPwd[ret.git_user_name . ':' . ret.git_remoteurl] = ret.git_user_pwd
-        let s:ZF_GitPrepare_savedPwdPredict[ret.git_user_name] = ret.git_user_pwd
+        let s:ZFGitPrepare_savedPwd[ret.git_user_name . ':' . ret.git_remoteurl] = ret.git_user_pwd
+        let s:ZFGitPrepare_savedPwdPredict[ret.git_user_name] = ret.git_user_pwd
     endif
 
     return extend({
@@ -188,7 +188,7 @@ function! s:alignedEcho(items)
     endfor
 endfunction
 
-function! ZF_GitGetRemote()
+function! ZFGitGetRemote()
     let url = system('git remote get-url --all origin')
     let url = substitute(url, '[\r\n]', '', 'g')
     " ^[a-z]+://
@@ -209,7 +209,7 @@ function! ZF_GitGetRemote()
     return substitute(url, '://.\+@', '://', '')
 endfunction
 
-function! ZF_GitGetBranch()
+function! ZFGitGetBranch()
     let ret = substitute(system('git rev-parse --abbrev-ref HEAD'), '[\r\n]', '', 'g')
     if v:shell_error == 0
         return ret
@@ -218,7 +218,7 @@ function! ZF_GitGetBranch()
     endif
 endfunction
 
-function! ZF_GitGetRemoteType(remoteUrl)
+function! ZFGitGetRemoteType(remoteUrl)
     " https?://
     if match(a:remoteUrl, 'https\=://') >= 0
         return 'http'
@@ -227,8 +227,8 @@ function! ZF_GitGetRemoteType(remoteUrl)
     endif
 endfunction
 
-function! ZF_GitCheckSsh(url)
-    if ZF_GitGetRemoteType(a:url) != 'ssh'
+function! ZFGitCheckSsh(url)
+    if ZFGitGetRemoteType(a:url) != 'ssh'
         return 0
     endif
 
@@ -278,7 +278,7 @@ function! ZF_GitCheckSsh(url)
     return 0
 endfunction
 
-function! ZF_GitConfigGet(cmd)
+function! ZFGitConfigGet(cmd)
     let ret = substitute(system(a:cmd), '[\r\n]', '', 'g')
     if ret == '='
         return ''
@@ -286,7 +286,7 @@ function! ZF_GitConfigGet(cmd)
         return ret
     endif
 endfunction
-function! ZF_GitGetInfo()
+function! ZFGitGetInfo()
     let ret = {
                 \   'git_remoteurl' : '',
                 \   'git_remotetype' : '',
@@ -295,11 +295,11 @@ function! ZF_GitGetInfo()
                 \   'git_user_pwd' : '',
                 \ }
 
-    let ret.git_remoteurl = ZF_GitGetRemote()
+    let ret.git_remoteurl = ZFGitGetRemote()
     if empty(ret.git_remoteurl)
         return ret
     endif
-    let ret.git_remotetype = ZF_GitGetRemoteType(ret.git_remoteurl)
+    let ret.git_remotetype = ZFGitGetRemoteType(ret.git_remoteurl)
 
     for userSetting in get(g:, 'zf_git', [])
         if !empty(get(userSetting, 'repo', ''))
@@ -324,8 +324,8 @@ function! ZF_GitGetInfo()
         endif
     endfor
 
-    let ret.git_user_email = ZF_GitConfigGet('git config user.email')
-    let ret.git_user_name = ZF_GitConfigGet('git config user.name')
+    let ret.git_user_email = ZFGitConfigGet('git config user.email')
+    let ret.git_user_name = ZFGitConfigGet('git config user.name')
     if !empty(ret.git_user_email) && !empty(ret.git_user_name)
         if ret.git_user_email == get(g:, 'zf_git_user_email', '') && ret.git_user_name == get(g:, 'zf_git_user_name', '')
             let ret.git_user_pwd = get(g:, 'zf_git_user_token', '')
@@ -340,8 +340,8 @@ function! ZF_GitGetInfo()
         return ret
     endif
 
-    let ret.git_user_email = ZF_GitConfigGet('git config --global user.email')
-    let ret.git_user_name = ZF_GitConfigGet('git config --global user.name')
+    let ret.git_user_email = ZFGitConfigGet('git config --global user.email')
+    let ret.git_user_name = ZFGitConfigGet('git config --global user.name')
     if !empty(ret.git_user_email) && !empty(ret.git_user_name)
         if ret.git_user_email == get(g:, 'zf_git_user_email', '') && ret.git_user_name == get(g:, 'zf_git_user_name', '')
             let ret.git_user_pwd = get(g:, 'zf_git_user_token', '')

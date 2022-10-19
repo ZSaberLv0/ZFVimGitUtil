@@ -1,5 +1,7 @@
 
-function! ZF_GitStatus()
+function! ZFGitStatus(...)
+    let checkAll = get(a:, 1, 0)
+
     redraw | echo '[ZFGitStatus] checking'
 
     let paths = split(glob('**/.git', 1), "\n")
@@ -8,6 +10,7 @@ function! ZF_GitStatus()
         return []
     endif
 
+    let hasChanges = 0
     let changes = {}
     let postFixLen = len('/.git')
     for path in paths
@@ -17,18 +20,25 @@ function! ZF_GitStatus()
         endif
 
         let change = split(system('cd "' . path . '"&& git status -s'), "\n")
-        if !empty(change)
+        if checkAll || !empty(change)
+            if !empty(change)
+                let hasChanges = 1
+            endif
             let changes[path] = change
         endif
     endfor
 
-    if empty(changes)
+    if !hasChanges
         redraw | echo '[ZFGitStatus] no changes'
         return []
     endif
 
     let hint = "[ZFGitStatus] changes:\n"
     for path in sort(keys(changes), 1)
+        if empty(changes[path])
+            continue
+        endif
+
         let hint .= "\n  " . path . "/\n"
         for item in changes[path]
             let hint .= '      ' . item . "\n"
@@ -38,5 +48,5 @@ function! ZF_GitStatus()
     let @t = hint
     return changes
 endfunction
-command! -nargs=0 ZFGitStatus :call ZF_GitStatus()
+command! -nargs=0 ZFGitStatus :call ZFGitStatus()
 

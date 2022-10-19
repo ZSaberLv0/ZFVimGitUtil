@@ -1,12 +1,15 @@
 
 " push quickly
-function! ZF_GitPushQuickly(bang, ...)
+" bang:
+"   * `!` : push without confirm
+"   * `u` : pull only
+function! ZFGitPushQuickly(bang, ...)
     let comment = get(a:, 1)
     if empty(comment)
         let comment = get(g:, 'ZFGitPushQuickly_defaultMsg', 'update')
     endif
 
-    let gitInfo = ZF_GitPrepare({
+    let gitInfo = ZFGitPrepare({
                 \   'module' : 'ZFGitPushQuickly',
                 \   'needPwd' : 1,
                 \   'confirm' : empty(a:bang) ? 1 : 0,
@@ -20,13 +23,16 @@ function! ZF_GitPushQuickly(bang, ...)
     if empty(gitInfo)
         return 'not git repo or canceled'
     endif
+    if a:bang == 'u'
+        let gitInfo.choice = 'u'
+    endif
 
-    let url = ZF_GitGetRemote()
+    let url = ZFGitGetRemote()
     if empty(url)
         echo 'unable to parse remote url'
         return 'unable to parse remote url'
     endif
-    if ZF_GitCheckSsh(url)
+    if ZFGitCheckSsh(url)
         return 'ssh repo without ssh key'
     endif
 
@@ -80,7 +86,7 @@ function! ZF_GitPushQuickly(bang, ...)
         echo 'unable to stash: ' . stashResult
         return 'unable to stash: ' . stashResult
     endif
-    let branch = ZF_GitGetBranch()
+    let branch = ZFGitGetBranch()
     if branch == 'HEAD'
         redraw!
         echo 'unable to parse git branch, maybe in detached HEAD?'
@@ -170,7 +176,7 @@ function! ZF_GitPushQuickly(bang, ...)
     echo pushResult
     return pushResult
 endfunction
-command! -nargs=? -bang ZFGitPushQuickly :call ZF_GitPushQuickly(<q-bang>, <q-args>)
+command! -nargs=? -bang ZFGitPushQuickly :call ZFGitPushQuickly(<q-bang>, <q-args>)
 
 function! ZF_GitMsgMatch(text, patterns)
     for i in range(len(a:patterns))

@@ -1,16 +1,16 @@
 
 " remove local and remote branch
-function! ZF_GitRemoveBranch(name)
-    let url = ZF_GitGetRemote()
+function! ZFGitRemoveBranch(name)
+    let url = ZFGitGetRemote()
     if empty(url)
         echo 'unable to parse remote url'
         return
     endif
-    if ZF_GitCheckSsh(url)
+    if ZFGitCheckSsh(url)
         return
     endif
 
-    let gitInfo = ZF_GitPrepare({
+    let gitInfo = ZFGitPrepare({
                 \   'module' : 'ZFGitRemoveBranch',
                 \   'needPwd' : 1,
                 \ })
@@ -26,7 +26,7 @@ function! ZF_GitRemoveBranch(name)
         let remoteUrl = url
     endif
 
-    let branch = ZF_GitGetBranch()
+    let branch = ZFGitGetBranch()
     if branch == a:name
         redraw!
         echo '[ZFGitRemoveBranch] can not remove current branch:'
@@ -68,5 +68,5 @@ function! ZF_GitRemoveBranch(name)
     echo 'remove remote branch:'
     echo pushResult
 endfunction
-command! -nargs=+ ZFGitRemoveBranch :call ZF_GitRemoveBranch(<q-args>)
+command! -nargs=+ ZFGitRemoveBranch :call ZFGitRemoveBranch(<q-args>)
 

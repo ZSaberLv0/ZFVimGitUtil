@@ -1,6 +1,6 @@
 
-function! ZF_GitClean()
-    let cleanInfo = ZF_GitCleanInfo()
+function! ZFGitClean()
+    let cleanInfo = ZFGitCleanInfo()
     if 1
                 \ && empty(cleanInfo['modified'])
                 \ && empty(cleanInfo['deleted'])
@@ -13,7 +13,7 @@ function! ZF_GitClean()
     call s:setupBuffer(cleanInfo, lines)
     redraw
 endfunction
-command! -nargs=0 ZFGitClean :call ZF_GitClean()
+command! -nargs=0 ZFGitClean :call ZFGitClean()
 
 " return: {
 "   'modified' : {},
@@ -21,7 +21,7 @@ command! -nargs=0 ZFGitClean :call ZF_GitClean()
 "   'untracked' : {},
 "   'ignored' : {},
 " }
-function! ZF_GitCleanInfo()
+function! ZFGitCleanInfo()
     let modified = {}
     let deleted = {}
     let untracked = {}
@@ -135,10 +135,10 @@ function! s:setupBuffer(cleanInfo, lines)
     setlocal foldignore=
     setlocal foldlevel=128
     let b:ZFGitCleanInfo = a:cleanInfo
-    nnoremap <buffer><silent> q :call ZF_GitClean_action()<cr>
+    nnoremap <buffer><silent> q :call ZFGitClean_action()<cr>
 endfunction
 
-function! ZF_GitClean_action()
+function! ZFGitClean_action()
     redraw!
     echo '[ZFGitClean] perform cleanup?'
     if exists('*ZFBackupSave')

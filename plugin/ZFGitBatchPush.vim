@@ -1,7 +1,7 @@
 
-function! ZF_GitBatchPush(...)
+function! ZFGitBatchPush(...)
     let comment = get(a:, 1)
-    let changes = ZF_GitStatus()
+    let changes = ZFGitStatus()
     if empty(changes)
         redraw | echo '[ZFGitBatchPush] no changes'
         return []
@@ -29,7 +29,7 @@ function! ZF_GitBatchPush(...)
         let taskSuccess = 1
         try
             execute 'cd ' . substitute(path, ' ', '\\ ', 'g')
-            let taskHint = ZF_GitPushQuickly('!', comment)
+            let taskHint = ZFGitPushQuickly('!', comment)
         catch
             let taskHint = printf('%s', v:exception)
             let taskSuccess = 0
@@ -51,5 +51,5 @@ function! ZF_GitBatchPush(...)
     echo pushHintText
     return changes
 endfunction
-command! -nargs=* ZFGitBatchPush :call ZF_GitBatchPush(<q-args>)
+command! -nargs=* ZFGitBatchPush :call ZFGitBatchPush(<q-args>)
 
