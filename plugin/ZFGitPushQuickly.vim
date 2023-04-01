@@ -39,7 +39,8 @@ function! ZFGitPushQuickly(bang, ...)
     let gitStatus = system('git status')
     let softPullMode = 0
     if ZF_GitMsgMatch(gitStatus, ZF_GitMsgFormat_containLocalCommits()) >= 0
-        let hint = "[ZFGitPushQuickly] WARNING: you have local commits not pushed,"
+        let hint = 'REPO: ' . url
+        let hint .= "\n[ZFGitPushQuickly] WARNING: you have local commits not pushed,"
         let hint .= "\n    continue quick push may cause confused result,"
         let hint .= "\n    it's adviced to manually operate:"
         let hint .= "\n    * `git push` manually"

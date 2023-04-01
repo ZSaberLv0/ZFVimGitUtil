@@ -34,7 +34,8 @@ function! ZFGitRemoveBranch(name)
         return
     endif
 
-    let hint = "[ZFGitRemoveBranch] about to remove local and remote branch:"
+    let hint = 'REPO: ' . gitInfo.git_remoteurl
+    let hint .= "\n[ZFGitRemoveBranch] about to remove local and remote branch:"
     let hint .= "\n    " . a:name
     let hint .= "\n"
     let hint .= "\nWARNING: can not undo"

@@ -32,7 +32,7 @@ function! ZFGitStatus(...)
         endif
     endfor
 
-    if !hasChanges
+    if !hasChanges && !all
         redraw | echo '[ZFGitStatus] no changes'
         return []
     endif
