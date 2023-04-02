@@ -158,6 +158,7 @@ function! ZFGitPushQuickly(bang, ...)
     if !exists('v:shell_error') || v:shell_error == 0
         call system('git fetch "' . remoteUrl . '" "+refs/heads/*:refs/remotes/origin/*"')
     else
+        call system('git fetch "' . remoteUrl . '" "+refs/heads/*:refs/remotes/origin/*"')
         " soft reset to undo commit,
         " prevent next push's hard reset from causing commits dropped
         call system('git reset origin/' . branch)
