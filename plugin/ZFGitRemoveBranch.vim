@@ -1,6 +1,8 @@
 
 " remove local and remote branch
-function! ZFGitRemoveBranch(name)
+" or remove remote branch only if <bang>
+function! ZFGitRemoveBranch(name, ...)
+    let bang = (get(a:, 1, '') == '!' ? 1 : 0)
     let url = ZFGitGetRemote()
     if empty(url)
         echo 'unable to parse remote url'
@@ -26,16 +28,22 @@ function! ZFGitRemoveBranch(name)
         let remoteUrl = url
     endif
 
-    let branch = ZFGitGetBranch()
-    if branch == a:name
-        redraw!
-        echo '[ZFGitRemoveBranch] can not remove current branch:'
-        echo '    ' . a:name
-        return
+    if !bang
+        let curBranch = ZFGitGetBranch()
+        if curBranch == a:name
+            redraw!
+            echo '[ZFGitRemoveBranch] can not remove current branch:'
+            echo '    ' . a:name
+            return
+        endif
     endif
 
     let hint = 'REPO: ' . gitInfo.git_remoteurl
-    let hint .= "\n[ZFGitRemoveBranch] about to remove local and remote branch:"
+    if bang
+        let hint .= "\n[ZFGitRemoveBranch] about to remove REMOTE branch:"
+    else
+        let hint .= "\n[ZFGitRemoveBranch] about to remove local and REMOTE branch:"
+    endif
     let hint .= "\n    " . a:name
     let hint .= "\n"
     let hint .= "\nWARNING: can not undo"
@@ -52,9 +60,11 @@ function! ZFGitRemoveBranch(name)
     call system('git config user.email "' . gitInfo.git_user_email . '"')
     call system('git config user.name "' . gitInfo.git_user_name . '"')
 
-    redraw!
-    echo '[ZFGitRemoveBranch] removing local branch "' . a:name . '" ... '
-    let removeLocalResult = system('git branch -d ' . a:name)
+    if !bang
+        redraw!
+        echo '[ZFGitRemoveBranch] removing local branch "' . a:name . '" ... '
+        let removeLocalResult = system('git branch -d ' . a:name)
+    endif
 
     redraw!
     echo '[ZFGitRemoveBranch] removing remote branch "' . a:name . '" ... '
@@ -63,11 +73,13 @@ function! ZFGitRemoveBranch(name)
     call system('git fetch -p -P "' . remoteUrl . '" "+refs/heads/*:refs/remotes/origin/*"')
 
     redraw!
-    echo 'remove local branch:'
-    echo removeLocalResult
-    echo "\n"
+    if !bang
+        echo 'remove local branch:'
+        echo removeLocalResult
+        echo "\n"
+    endif
     echo 'remove remote branch:'
     echo pushResult
 endfunction
-command! -nargs=+ ZFGitRemoveBranch :call ZFGitRemoveBranch(<q-args>)
+command! -nargs=+ -bang ZFGitRemoveBranch :call ZFGitRemoveBranch(<q-args>, <q-bang>)
 
