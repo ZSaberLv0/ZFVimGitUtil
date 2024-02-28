@@ -39,7 +39,7 @@ Plugin 'ZSaberLv0/ZFVimGitUtil'
     * ssh repo is not directly supported: `(ssh://)user@server:/path`
     * to support ssh repo:
         1. on YourClient: `ssh-keygen`
-        1. on YourClient: `ssh-copy-id -i ~/.ssh/id_rsa.pub YourServerUserName@YourServerDomain`
+        1. on YourClient: `ssh-copy-id -i ~/.ssh/id_rsa.pub -p 22 YourServerUserName@YourServerDomain`
         1. make sure it works before actually use quick push:
 
             `git fetch --all`, if fetch success without password required, then you are done

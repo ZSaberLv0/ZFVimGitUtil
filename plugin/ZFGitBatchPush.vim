@@ -1,10 +1,35 @@
 
+" option: {
+"   'comment' : 'push comment',
+" }
+"
+" return: {
+"   'exitCode' : '',
+"       // 0: success
+"       // 'ZF_CANCELED': canceled
+"       // 'ZF_NO_REPO': no repo
+"       // other: error
+"   'task' : {
+"     'repo path' : {
+"       'exitCode' : '', // result of ZFGitPushQuickly
+"       'output' : '',
+"       'changes' : [ // changes of ZFGitStatus
+"         'U xxx',
+"         'D xxx',
+"       ],
+"     },
+"   },
+" }
 function! ZFGitBatchPush(...)
-    let comment = get(a:, 1)
+    let option = get(a:, 1, {})
+    let comment = get(option, 'comment', '')
     let changes = ZFGitStatus()
     if empty(changes)
         redraw | echo '[ZFGitBatchPush] no changes'
-        return []
+        return {
+                    \   'exitCode' : 'ZF_NO_REPO',
+                    \   'task' : {},
+                    \ }
     endif
 
     let hint = "\n============================================================"
@@ -18,38 +43,59 @@ function! ZFGitBatchPush(...)
     if input != 'got it'
         redraw!
         echo '[ZFGitBatchPush] canceled'
-        return
+        return {
+                    \   'exitCode' : 'ZF_CANCELED',
+                    \   'task' : {},
+                    \ }
     endif
 
     let pwdSaved = getcwd()
-    let pushHint = []
+    let taskHint = []
+
+    let error = ''
+    let task = {}
 
     for path in keys(changes)
-        let taskHint = ''
+        let taskResult = {}
         let taskSuccess = 1
         try
             execute 'cd ' . substitute(path, ' ', '\\ ', 'g')
-            let taskHint = ZFGitPushQuickly('!', comment)
+            let taskResult = ZFGitPushQuickly({
+                        \   'mode' : '!',
+                        \   'comment' : comment,
+                        \ })
         catch
-            let taskHint = printf('%s', v:exception)
+            let taskResult = {
+                        \   'exitCode' : 'ZF_ERROR',
+                        \   'output' : printf('%s', v:exception),
+                        \ }
             let taskSuccess = 0
         finally
             execute 'cd ' . substitute(pwdSaved, ' ', '\\ ', 'g')
         endtry
-        if !empty(taskHint)
-            call add(pushHint, taskHint)
+        if !empty(taskResult)
+            call add(taskHint, taskResult['output'])
         endif
+        let taskResult['changes'] = changes['path']
+        let task[path] = taskResult
         if !taskSuccess
+            if exitCode != ''
+                let exitCode .= '_'
+            endif
+            let exitCode .= taskResult['exitCode']
             break
         endif
     endfor
 
     execute 'cd ' . substitute(pwdSaved, ' ', '\\ ', 'g')
-    let pushHintText = join(pushHint, "\n")
-    let @t = pushHintText
+    let taskHintText = join(taskHint, "\n")
+    let @t = taskHintText
     redraw!
-    echo pushHintText
-    return changes
+    echo taskHintText
+    return {
+                \   'exitCode' : (error == '' ? '0' : error),
+                \   'task' : task,
+                \ }
 endfunction
-command! -nargs=* ZFGitBatchPush :call ZFGitBatchPush(<q-args>)
+command! -nargs=* ZFGitBatchPush :call ZFGitBatchPush({'comment':<q-args>})
 

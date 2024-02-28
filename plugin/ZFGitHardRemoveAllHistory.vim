@@ -32,8 +32,8 @@ function! ZFGitHardRemoveAllHistory()
         return
     endif
 
-    call system('git config user.email "' . gitInfo.git_user_email . '"')
-    call system('git config user.name "' . gitInfo.git_user_name . '"')
+    call ZFGitCmd('git config user.email "' . gitInfo.git_user_email . '"')
+    call ZFGitCmd('git config user.name "' . gitInfo.git_user_name . '"')
 
     if (has('win32') || has('win64')) && !has('unix')
         let cmd = '"' . s:scriptPath . 'git_hard_remove_all_history.bat' . '"'
@@ -50,7 +50,7 @@ function! ZFGitHardRemoveAllHistory()
     echo '[ZFGitHardRemoveAllHistory] running... ' . gitInfo['git_remoteurl']
 
     " strip password
-    let pushResult = system(cmd)
+    let pushResult = ZFGitCmd(cmd)
     let pushResult = substitute(pushResult, ':[^:]*@', '@', 'g')
     redraw!
     let moreSaved = &more

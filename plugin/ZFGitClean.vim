@@ -89,7 +89,7 @@ endfunction
 
 " ============================================================
 function! s:runGitCmd(cmd)
-    return system('git -c "core.quotepath=false" ' . a:cmd)
+    return ZFGitCmd('git -c "core.quotepath=false" ' . a:cmd)
 endfunction
 
 function! s:prepareLines(cleanInfo)
@@ -214,20 +214,20 @@ function! s:cleanFileOrDir(cleanInfo, fileOrDir, autoBackup)
         if a:autoBackup
             call s:tryBackup(a:fileOrDir)
         endif
-        call system('git reset HEAD "' . a:fileOrDir . '"')
-        call system('git checkout "' . a:fileOrDir . '"')
+        call ZFGitCmd('git reset HEAD "' . a:fileOrDir . '"')
+        call ZFGitCmd('git checkout "' . a:fileOrDir . '"')
     elseif exists("a:cleanInfo['untracked'][a:fileOrDir]") || exists("a:cleanInfo['ignored'][a:fileOrDir]")
         if a:autoBackup
             call s:tryBackup(a:fileOrDir)
         endif
         if exists("a:cleanInfo['untracked'][a:fileOrDir]")
-            call system('git reset HEAD "' . a:fileOrDir . '"')
+            call ZFGitCmd('git reset HEAD "' . a:fileOrDir . '"')
         endif
         if (has('win32') || has('win64')) && !has('unix')
-            call system('del /f/q "' . substitute(a:fileOrDir, '/', '\\', 'g') . '"')
-            call system('rmdir /s/q "' . substitute(a:fileOrDir, '/', '\\', 'g') . '"')
+            call ZFGitCmd('del /f/q "' . substitute(a:fileOrDir, '/', '\\', 'g') . '"')
+            call ZFGitCmd('rmdir /s/q "' . substitute(a:fileOrDir, '/', '\\', 'g') . '"')
         else
-            call system('rm -rf "' . a:fileOrDir . '"')
+            call ZFGitCmd('rm -rf "' . a:fileOrDir . '"')
         endif
     endif
 endfunction

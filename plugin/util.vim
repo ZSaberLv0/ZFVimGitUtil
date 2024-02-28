@@ -189,7 +189,7 @@ function! s:alignedEcho(items)
 endfunction
 
 function! ZFGitGetRemote()
-    let url = system('git remote get-url --all origin')
+    let url = ZFGitCmd('git remote get-url --all origin')
     let url = substitute(url, '[\r\n]', '', 'g')
     " ^[a-z]+://
     if match(url, '^[a-z]\+://') < 0
@@ -202,7 +202,7 @@ function! ZFGitGetRemote()
         " ssh:
         "   origin  root@192.168.xx.xx:/path/sample (fetch)
         "   origin  root@192.168.xx.xx:/path/sample (push)
-        let remote = system('git remote -v')
+        let remote = ZFGitCmd('git remote -v')
         " (?<=origin[ \t]+)[^ \t]+(?=[ \t]+\(push\))
         let url = matchstr(remote, '\%(origin[ \t]\+\)\@<=[^ \t]\+\%([ \t]\+(push)\)\@=')
     endif
@@ -210,7 +210,7 @@ function! ZFGitGetRemote()
 endfunction
 
 function! ZFGitGetBranch()
-    let ret = substitute(system('git rev-parse --abbrev-ref HEAD'), '[\r\n]', '', 'g')
+    let ret = substitute(ZFGitCmd('git rev-parse --abbrev-ref HEAD'), '[\r\n]', '', 'g')
     if v:shell_error == 0
         return ret
     else
@@ -232,6 +232,8 @@ function! ZFGitCheckSsh(url)
         return 0
     endif
 
+    redraw | echo 'checking whether ssh repo... ' . a:url
+
     " Fetching origin
     " Host key verification failed.
     " fatal: Could not read from remote repository.
@@ -239,12 +241,8 @@ function! ZFGitCheckSsh(url)
     " Please make sure you have the correct access rights
     " and the repository exists.
     " error: Could not fetch origin
-    let tryFetch = system('git fetch --all')
-    if match(tryFetch, 'Fetching origin') >= 0
-                \ && match(tryFetch, 'Host key verification failed') < 0
-                \ && match(tryFetch, 'Could not read from remote repository') < 0
-                \ && match(tryFetch, 'Please make sure you have the correct access rights') < 0
-                \ && match(tryFetch, 'Could not fetch origin') < 0
+    let tryFetch = ZFGitCmd('git fetch --all')
+    if exists('v:shell_error') && v:shell_error == '0'
         return 0
     endif
 
@@ -262,7 +260,7 @@ function! ZFGitCheckSsh(url)
     let hint .= "\nthere's no way to quick push without proper ssh key"
     let hint .= "\ntypically this is what you should do:"
     let hint .= "\n    ssh-keygen"
-    let hint .= "\n    ssh-copy-id -i ~/.ssh/id_rsa.pub YourServerUserName@YourServerDomain"
+    let hint .= "\n    ssh-copy-id -i ~/.ssh/id_rsa.pub -p 22 YourServerUserName@YourServerDomain"
     let hint .= "\n"
     let hint .= "\nif you are sure it's setup properly"
     let hint .= "\n  (`git fetch --all` does not require password)"
@@ -279,7 +277,7 @@ function! ZFGitCheckSsh(url)
 endfunction
 
 function! ZFGitConfigGet(cmd)
-    let ret = substitute(system(a:cmd), '[\r\n]', '', 'g')
+    let ret = substitute(ZFGitCmd(a:cmd), '[\r\n]', '', 'g')
     if ret == '='
         return ''
     else
@@ -350,5 +348,17 @@ function! ZFGitGetInfo()
     endif
 
     return ret
+endfunction
+
+function! ZFGitCmd(cmd)
+    if exists('g:ZFGitCmd_log')
+        let startTime = reltime()
+        let ret = system(a:cmd)
+        let costTime = float2nr(reltimefloat(reltime(startTime, reltime())) * 1000)
+        call add(g:ZFGitCmd_log, printf("%s\t%s\t%s\t%s", v:shell_error, costTime, a:cmd, join(split(ret, "\n"), '\\n')))
+        return ret
+    else
+        return system(a:cmd)
+    endif
 endfunction
 

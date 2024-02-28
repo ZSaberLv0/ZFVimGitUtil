@@ -1,18 +1,35 @@
 
 " push quickly
-" bang:
-"   * `!` : push without confirm
-"   * `u` : pull only
-function! ZFGitPushQuickly(bang, ...)
-    let comment = get(a:, 1)
+" option: {
+"   'mode' : '',
+"       // default : push with confirm
+"       // '!' : push without confirm
+"       // 'u' : pull only
+"   'forcePushLocalCommits' : 0/1,
+"   'comment' : 'push comment',
+" }
+"
+" return: {
+"   'exitCode' : '',
+"       // '0': success
+"       // 'ZF_CANCELED': canceled
+"       // 'ZF_ERROR': internal error
+"       // 'ZF_CONFLICT': conflict
+"       // other: error
+"   'output' : '',
+" }
+function! ZFGitPushQuickly(...)
+    let option = get(a:, 1, {})
+    let comment = get(option, 'comment', '')
     if empty(comment)
         let comment = get(g:, 'ZFGitPushQuickly_defaultMsg', 'update')
     endif
+    let mode = get(option, 'mode', '')
 
     let gitInfo = ZFGitPrepare({
                 \   'module' : 'ZFGitPushQuickly',
                 \   'needPwd' : 1,
-                \   'confirm' : empty(a:bang) ? 1 : 0,
+                \   'confirm' : empty(mode) ? 1 : 0,
                 \   'extraInfo' : {
                 \      'msg' : comment,
                 \   },
@@ -21,41 +38,57 @@ function! ZFGitPushQuickly(bang, ...)
                 \   },
                 \ })
     if empty(gitInfo)
-        return 'not git repo or canceled'
+        return {
+                    \   'exitCode' : 'ZF_CANCELED',
+                    \   'output' : 'not git repo or canceled',
+                    \ }
     endif
-    if a:bang == 'u'
+    if mode == 'u'
         let gitInfo.choice = 'u'
     endif
 
     let url = ZFGitGetRemote()
     if empty(url)
         echo 'unable to parse remote url'
-        return 'unable to parse remote url'
+        return {
+                    \   'exitCode' : 'ZF_ERROR',
+                    \   'output' : 'unable to parse remote url',
+                    \ }
     endif
     if ZFGitCheckSsh(url)
-        return 'ssh repo without ssh key'
+        return {
+                    \   'exitCode' : 'ZF_ERROR',
+                    \   'output' : 'ssh repo without ssh key',
+                    \ }
     endif
 
-    let gitStatus = system('git status')
+    let gitStatus = ZFGitCmd('git status --porcelain --branch')
     let softPullMode = 0
     if ZF_GitMsgMatch(gitStatus, ZF_GitMsgFormat_containLocalCommits()) >= 0
-        let hint = 'REPO: ' . url
-        let hint .= "\n[ZFGitPushQuickly] WARNING: you have local commits not pushed,"
-        let hint .= "\n    continue quick push may cause confused result,"
-        let hint .= "\n    it's adviced to manually operate:"
-        let hint .= "\n    * `git push` manually"
-        let hint .= "\n    * `git reset origin/<branch>` to undo local commit and try again"
-        let hint .= "\n"
-        let hint .= "\nif you really know what you are doing,"
-        let hint .= "\nenter `got it` to continue: "
-        redraw!
-        call inputsave()
-        let input = input(hint)
-        call inputrestore()
+        if get(option, 'forcePushLocalCommits', 0)
+            let input = 'got it'
+        else
+            let hint = 'REPO: ' . url
+            let hint .= "\n[ZFGitPushQuickly] WARNING: you have local commits not pushed,"
+            let hint .= "\n    continue quick push may cause confused result,"
+            let hint .= "\n    it's adviced to manually operate:"
+            let hint .= "\n    * `git push` manually"
+            let hint .= "\n    * `git reset origin/<branch>` to undo local commit and try again"
+            let hint .= "\n"
+            let hint .= "\nif you really know what you are doing,"
+            let hint .= "\nenter `got it` to continue: "
+            redraw!
+            call inputsave()
+            let input = input(hint)
+            call inputrestore()
+        endif
         if input != 'got it'
             redraw!
             echo '[ZFGitPushQuickly] canceled'
-            return 'canceled'
+            return {
+                        \  'exitCode' : 'ZF_CANCELED',
+                        \  'output' : 'canceled',
+                        \ }
         endif
         let softPullMode = 1
     endif
@@ -70,28 +103,34 @@ function! ZFGitPushQuickly(bang, ...)
 
     redraw!
     echo 'updating... ' . url
-    call system('git config user.email "' . gitInfo.git_user_email . '"')
-    call system('git config user.name "' . gitInfo.git_user_name . '"')
+    call ZFGitCmd('git config user.email "' . gitInfo.git_user_email . '"')
+    call ZFGitCmd('git config user.name "' . gitInfo.git_user_name . '"')
     for config in get(g:, 'zf_git_extra_config', [
                 \   'git config core.filemode false',
                 \   'git config core.autocrlf false',
                 \   'git config core.safecrlf true',
                 \ ])
-        call system(config)
+        call ZFGitCmd(config)
     endfor
 
-    call system('git add -A')
-    let stashResult = system('git stash')
+    call ZFGitCmd('git add -A')
+    let stashResult = ZFGitCmd('git stash')
     if exists('v:shell_error') && v:shell_error != 0
         redraw!
         echo 'unable to stash: ' . stashResult
-        return 'unable to stash: ' . stashResult
+        return {
+                    \   'exitCode' : '' . v:shell_error,
+                    \   'output' : 'unable to stash: ' . stashResult,
+                    \ }
     endif
     let branch = ZFGitGetBranch()
     if branch == 'HEAD'
         redraw!
         echo 'unable to parse git branch, maybe in detached HEAD?'
-        return 'unable to parse git branch, maybe in detached HEAD?'
+        return {
+                    \   'exitCode' : 'ZF_ERROR',
+                    \   'output' : 'unable to parse git branch, maybe in detached HEAD?',
+                    \ }
     endif
     if empty(branch)
         redraw!
@@ -99,23 +138,26 @@ function! ZFGitPushQuickly(bang, ...)
         redraw!
         if empty(branch)
             echo '[ZFGitPushQuickly] canceled'
-            return 'canceled'
+            return {
+                        \   'exitCode' : 'ZF_CANCELED',
+                        \   'output' : 'canceled',
+                        \ }
         endif
     endif
-    call system('git fetch "' . remoteUrl . '" "+refs/heads/*:refs/remotes/origin/*"')
+    call ZFGitCmd('git fetch "' . remoteUrl . '" "+refs/heads/*:refs/remotes/origin/*"')
 
     if softPullMode
-        let pullResult = system('git pull "' . remoteUrl . '" "' . branch . '"')
+        let pullResult = ZFGitCmd('git pull "' . remoteUrl . '" "' . branch . '"')
     else
-        let pullResult = system('git reset --hard origin/' . branch)
-        if ZF_GitMsgMatch(pullResult, ZF_GitMsgFormat_noRemoteBranch()) < 0
+        let pullResult = ZFGitCmd('git reset --hard origin/' . branch)
+        if !(exists('v:shell_error') && v:shell_error != '0')
             " pull only if remote branch exists
-            call system('git pull "' . remoteUrl . '" "' . branch . '"')
+            call ZFGitCmd('git pull "' . remoteUrl . '" "' . branch . '"')
         endif
     endif
 
-    call system('git stash pop')
-    let stashResult = system('git status -s')
+    call ZFGitCmd('git stash pop')
+    let stashResult = ZFGitCmd('git status -s')
     let conflictFiles = []
     if s:openConflictFiles(split(stashResult, "\n"), conflictFiles) > 0
         " <<<<<<< Updated upstream
@@ -135,52 +177,61 @@ function! ZFGitPushQuickly(bang, ...)
             let msg .= "\n" . '    ' . conflictFile
         endfor
         echo msg
-        call system('git stash drop')
-        call system('git reset')
-        return msg
+        call ZFGitCmd('git stash drop')
+        call ZFGitCmd('git reset')
+        return {
+                    \   'exitCode' : 'ZF_CONFLICT',
+                    \   'output' : msg,
+                    \ }
     endif
 
     if gitInfo.choice == 'u'
-        call system('git reset HEAD')
+        call ZFGitCmd('git reset HEAD')
         redraw!
         let msg = 'REPO: ' . url
         let msg .= "\n" . pullResult
-        let msg .= "\n" . system('git show -s --format=%B')
+        let msg .= "\n" . ZFGitCmd('git show -s --format=%B')
         echo msg
-        return msg
+        return {
+                    \   'exitCode' : '0',
+                    \   'output' : msg,
+                    \ }
     endif
 
     redraw!
     echo 'pushing... ' . url
-    call system('git add -A')
-    call system('git commit -m "' . comment . '"')
-    let pushResult = system('git push "' . remoteUrl . '" HEAD')
+    call ZFGitCmd('git add -A')
+    call ZFGitCmd('git commit -m "' . comment . '"')
+    let pushResult = ZFGitCmd('git push "' . remoteUrl . '" HEAD')
     if !exists('v:shell_error') || v:shell_error == 0
-        call system('git fetch "' . remoteUrl . '" "+refs/heads/*:refs/remotes/origin/*"')
+        call ZFGitCmd('git fetch "' . remoteUrl . '" "+refs/heads/*:refs/remotes/origin/*"')
     else
-        call system('git fetch "' . remoteUrl . '" "+refs/heads/*:refs/remotes/origin/*"')
+        call ZFGitCmd('git fetch "' . remoteUrl . '" "+refs/heads/*:refs/remotes/origin/*"')
         " soft reset to undo commit,
         " prevent next push's hard reset from causing commits dropped
-        call system('git reset origin/' . branch)
+        call ZFGitCmd('git reset origin/' . branch)
     endif
     redraw!
 
     " try to auto update upstream
-    let upstream = system('git rev-parse --abbrev-ref ' . branch . '@{upstream}')
+    let upstream = ZFGitCmd('git rev-parse --abbrev-ref ' . branch . '@{upstream}')
     if match(upstream, '[a-z]+\/' . branch) < 0
         " git 1.8.0 or above
-        call system('git branch --set-upstream-to=origin/' . branch . ' ' . branch)
+        call ZFGitCmd('git branch --set-upstream-to=origin/' . branch . ' ' . branch)
         " git 1.7 or below
-        call system('git branch --set-upstream ' . branch . ' origin/' . branch)
+        call ZFGitCmd('git branch --set-upstream ' . branch . ' origin/' . branch)
     endif
 
     let pushResult = printf("REPO: %s\n%s", url, pushResult)
     " strip password
     let pushResult = substitute(pushResult, ':[^:]*@', '@', 'g')
     echo pushResult
-    return pushResult
+    return {
+                \   'exitCode' : '0',
+                \   'output' : pushResult,
+                \ }
 endfunction
-command! -nargs=? -bang ZFGitPushQuickly :call ZFGitPushQuickly(<q-bang>, <q-args>)
+command! -nargs=? -bang ZFGitPushQuickly :call ZFGitPushQuickly({'mode' : <q-bang>, 'comment' : <q-args>})
 
 function! ZF_GitMsgMatch(text, patterns)
     for i in range(len(a:patterns))

@@ -2,6 +2,13 @@
 " option: {
 "   'all' : 0/1, // whether include repo which has no changes, default: 0
 " }
+"
+" return: {
+"   'repo path' : [
+"     'U xxx',
+"     'D xxx',
+"   ],
+" }
 function! ZFGitStatus(...)
     let option = get(a:, 1, {})
     let all = get(option, 'all', 0)
@@ -23,7 +30,7 @@ function! ZFGitStatus(...)
             let path = '.'
         endif
 
-        let change = split(system('cd "' . path . '"&& git status -s'), "\n")
+        let change = split(ZFGitCmd('cd "' . path . '"&& git status -s'), "\n")
         if all || !empty(change)
             if !empty(change)
                 let hasChanges = 1

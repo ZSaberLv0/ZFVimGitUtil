@@ -57,20 +57,20 @@ function! ZFGitRemoveBranch(name, ...)
         return
     endif
 
-    call system('git config user.email "' . gitInfo.git_user_email . '"')
-    call system('git config user.name "' . gitInfo.git_user_name . '"')
+    call ZFGitCmd('git config user.email "' . gitInfo.git_user_email . '"')
+    call ZFGitCmd('git config user.name "' . gitInfo.git_user_name . '"')
 
     if !bang
         redraw!
         echo '[ZFGitRemoveBranch] removing local branch "' . a:name . '" ... '
-        let removeLocalResult = system('git branch -d ' . a:name)
+        let removeLocalResult = ZFGitCmd('git branch -d ' . a:name)
     endif
 
     redraw!
     echo '[ZFGitRemoveBranch] removing remote branch "' . a:name . '" ... '
-    let pushResult = system('git push "' . remoteUrl . '" --delete ' . a:name)
+    let pushResult = ZFGitCmd('git push "' . remoteUrl . '" --delete ' . a:name)
     let pushResult = substitute(pushResult, ':[^:]*@', '@', 'g')
-    call system('git fetch -p -P "' . remoteUrl . '" "+refs/heads/*:refs/remotes/origin/*"')
+    call ZFGitCmd('git fetch -p -P "' . remoteUrl . '" "+refs/heads/*:refs/remotes/origin/*"')
 
     redraw!
     if !bang
