@@ -117,5 +117,5 @@ function! ZFGitMergeToAndPush(toBranch, ...)
                 \   'output' : output,
                 \ }
 endfunction
-command! -nargs=1 ZFGitMergeToAndPush :call ZFGitMergeToAndPush(<q-args>, {'mode' : <q-bang>})
+command! -nargs=1 -complete=customlist,ZFGitCmdComplete_branch ZFGitMergeToAndPush :call ZFGitMergeToAndPush(<q-args>, {'mode' : <q-bang>})
 

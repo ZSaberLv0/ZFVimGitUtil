@@ -362,3 +362,67 @@ function! ZFGitCmd(cmd)
     endif
 endfunction
 
+function! ZFGitCmdComplete_branch(ArgLead, CmdLine, CursorPos)
+    let tmp = {}
+    for item in ZFGitCmdComplete_branch_local(a:ArgLead, a:CmdLine, a:CursorPos)
+        let tmp[item] = 1
+    endfor
+    for item in ZFGitCmdComplete_branch_remote(a:ArgLead, a:CmdLine, a:CursorPos)
+        let tmp[item] = 1
+    endfor
+    return keys(tmp)
+endfunction
+
+function! ZFGitCmdComplete_branch_remote(ArgLead, CmdLine, CursorPos)
+    let ret = []
+    for line in split(ZFGitCmd('git branch -r'), "\n")
+        " origin/HEAD -> origin/master
+        " .*\-> *
+        let line = substitute(line, '.*\-> *', '', '')
+        " ^ *origin\/
+        let line = substitute(line, '^ *origin\/', '', '')
+        let line = s:branchCompleteFix(line, a:ArgLead)
+        if !empty(line)
+            call add(ret, line)
+        endif
+    endfor
+    return ret
+endfunction
+
+function! ZFGitCmdComplete_branch_local(ArgLead, CmdLine, CursorPos)
+    let ret = []
+    for line in split(ZFGitCmd('git branch'), "\n")
+        " * (HEAD detached at bbb3ec7)
+        " ^\* \(.*\)$
+        if match(line, '^\* (.*)$') >= 0
+            continue
+        endif
+        " * master
+        let line = substitute(line, '^\* *', '', '')
+        let line = s:branchCompleteFix(line, a:ArgLead)
+        if !empty(line)
+            call add(ret, line)
+        endif
+    endfor
+    return ret
+endfunction
+
+" ArgLead: aa/b
+" line: aa/bb/cc
+" to: aa/bb, instead: aa/bb/cc
+function! s:branchCompleteFix(line, ArgLead)
+    if !empty(a:ArgLead)
+                \ && match(a:line, '\V\^' . a:ArgLead) < 0
+        return ''
+    endif
+
+    let match = matchstr(a:line, '\V\^' . a:ArgLead)
+    let tail = strpart(a:line, len(match))
+    let pos = match(tail, '/')
+    if pos < 0
+        return a:line
+    else
+        return match . strpart(tail, 0, pos + 1)
+    endif
+endfunction
+

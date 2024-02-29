@@ -81,5 +81,5 @@ function! ZFGitRemoveBranch(name, ...)
     echo 'remove remote branch:'
     echo pushResult
 endfunction
-command! -nargs=+ -bang ZFGitRemoveBranch :call ZFGitRemoveBranch(<q-args>, <q-bang>)
+command! -nargs=+ -bang -complete=customlist,ZFGitCmdComplete_branch ZFGitRemoveBranch :call ZFGitRemoveBranch(<q-args>, <q-bang>)
 
