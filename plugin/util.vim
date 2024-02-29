@@ -218,6 +218,15 @@ function! ZFGitGetBranch()
     endif
 endfunction
 
+function! ZFGitGetCommit()
+    let ret = system('git log -1 --format=format:"%H"')
+    if v:shell_error == 0 && !empty(ret)
+        return substitute(ret, '[\r\n]', '', 'g')
+    else
+        return ''
+    endif
+endfunction
+
 function! ZFGitGetRemoteType(remoteUrl)
     " https?://
     if match(a:remoteUrl, 'https\=://') >= 0
