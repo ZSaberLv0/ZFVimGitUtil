@@ -56,6 +56,7 @@ function! ZFGitPushQuickly(...)
                     \ }
     endif
     if ZFGitCheckSsh(url)
+        echo 'ssh repo without ssh key'
         return {
                     \   'exitCode' : 'ZF_ERROR',
                     \   'output' : 'ssh repo without ssh key',
@@ -84,7 +85,7 @@ function! ZFGitPushQuickly(...)
         endif
         if input != 'got it'
             redraw!
-            echo '[ZFGitPushQuickly] canceled'
+            echo 'canceled'
             return {
                         \  'exitCode' : 'ZF_CANCELED',
                         \  'output' : 'canceled',
@@ -137,7 +138,7 @@ function! ZFGitPushQuickly(...)
         let branch = input('no branch, enter new branch name to create: ', 'master')
         redraw!
         if empty(branch)
-            echo '[ZFGitPushQuickly] canceled'
+            echo 'canceled'
             return {
                         \   'exitCode' : 'ZF_CANCELED',
                         \   'output' : 'canceled',
@@ -176,9 +177,9 @@ function! ZFGitPushQuickly(...)
         for conflictFile in conflictFiles
             let msg .= "\n" . '    ' . conflictFile
         endfor
-        echo msg
         call ZFGitCmd('git stash drop')
         call ZFGitCmd('git reset')
+        echo msg
         return {
                     \   'exitCode' : 'ZF_CONFLICT',
                     \   'output' : msg,

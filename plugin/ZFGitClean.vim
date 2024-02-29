@@ -6,7 +6,7 @@ function! ZFGitClean()
                 \ && empty(cleanInfo['deleted'])
                 \ && empty(cleanInfo['untracked'])
                 \ && empty(cleanInfo['ignored'])
-        redraw | echo '[ZFGitClean] already clean'
+        redraw | echo 'already clean'
         return
     endif
     let lines = s:prepareLines(cleanInfo)
@@ -80,7 +80,7 @@ function! ZFGitCleanRun(cleanInfo, ...)
         let i = 0
         let iEnd = len(toClean)
         while i < iEnd
-            redraw | echo '[ZFGitClean] (' . (i+1) . '/' . iEnd . ') cleanup: ' . fnamemodify(toClean[i], ':t')
+            redraw | echo '(' . (i+1) . '/' . iEnd . ') cleanup: ' . fnamemodify(toClean[i], ':t')
             call s:cleanFileOrDir(a:cleanInfo, toClean[i], autoBackup)
             let i += 1
         endwhile
@@ -159,12 +159,12 @@ endfunction
 
 function! ZF_GitClean_action()
     if !exists('b:ZFGitCleanInfo')
-        redraw | echo '[ZFGitClean] invalid state'
+        redraw | echo 'invalid state'
         return
     endif
 
     redraw!
-    echo '[ZFGitClean] perform cleanup?'
+    echo 'perform git repo cleanup?'
     if exists('*ZFBackupSave')
         echo '  (Y)es without backup'
     endif
@@ -178,7 +178,7 @@ function! ZF_GitClean_action()
         if confirm ==# 'n' || confirm ==# 'q'
             bdelete!
         endif
-        redraw | echo '[ZFGitClean] canceled'
+        redraw | echo 'canceled'
         return
     endif
     let autoBackup = (confirm !=# 'Y')
@@ -199,7 +199,7 @@ function! ZF_GitClean_action()
     let i = 0
     let iEnd = len(toClean)
     while i < iEnd
-        redraw | echo '[ZFGitClean] (' . (i+1) . '/' . iEnd . ') cleanup: ' . fnamemodify(toClean[i], ':t')
+        redraw | echo '(' . (i+1) . '/' . iEnd . ') cleanup: ' . fnamemodify(toClean[i], ':t')
         call s:cleanFileOrDir(b:ZFGitCleanInfo, toClean[i], autoBackup)
         let i += 1
     endwhile

@@ -36,19 +36,19 @@ function! ZFGitBatchPull(...)
     call inputrestore()
     if input != 'got it'
         redraw!
-        echo '[ZFGitBatchPull] canceled'
+        echo 'canceled'
         return {
                     \   'exitCode' : 'ZF_CANCELED',
                     \   'task' : {},
                     \ }
     endif
 
-    redraw! | echo '[ZFGitBatchPull] checking repos under current dir'
+    redraw! | echo 'checking repos under current dir'
     silent! let changes = ZFGitStatus({
                 \   'all' : 1,
                 \ })
     if empty(changes)
-        redraw | echo '[ZFGitBatchPull] no repos'
+        redraw | echo 'no repos'
         return {
                     \   'exitCode' : 'ZF_NO_REPO',
                     \   'task' : {},

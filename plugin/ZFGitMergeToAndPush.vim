@@ -21,14 +21,22 @@ function! ZFGitMergeToAndPush(toBranch, ...)
 
     let curBranch = ZFGitGetBranch()
     if empty(curBranch)
+        echo 'unable to obtain branch'
         return {
                     \   'exitCode' : 'ZF_ERROR',
                     \   'output' : 'unable to obtain branch',
+                    \ }
+    elseif curBranch == 'HEAD'
+        echo 'can not work on detached HEAD'
+        return {
+                    \   'exitCode' : 'ZF_ERROR',
+                    \   'output' : 'can not work on detached HEAD',
                     \ }
     endif
 
     let change = split(ZFGitCmd('git status -s'), "\n")
     if !empty(change)
+        echo 'local changes not commited'
         return {
                     \   'exitCode' : 'ZF_CANCELED',
                     \   'output' : 'local changes not commited',
@@ -73,6 +81,7 @@ function! ZFGitMergeToAndPush(toBranch, ...)
             echo 'branch restore failed: ' . restoreResult
         endif
 
+        echo 'fetch failed: ' . taskResult['output']
         return {
                     \   'exitCode' : taskResult['exitCode'],
                     \   'output' : 'fetch failed: ' . taskResult['output'],

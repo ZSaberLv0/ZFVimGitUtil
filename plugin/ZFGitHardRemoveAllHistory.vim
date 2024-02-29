@@ -28,7 +28,7 @@ function! ZFGitHardRemoveAllHistory()
     call inputrestore()
     if input != 'got it'
         redraw!
-        echo '[ZFGitHardRemoveAllHistory] canceled'
+        echo 'canceled'
         return
     endif
 
@@ -47,7 +47,7 @@ function! ZFGitHardRemoveAllHistory()
                 \ . ' "' . gitInfo.git_user_pwd . '"'
 
     redraw!
-    echo '[ZFGitHardRemoveAllHistory] running... ' . gitInfo['git_remoteurl']
+    echo 'running... ' . gitInfo['git_remoteurl']
 
     " strip password
     let pushResult = ZFGitCmd(cmd)

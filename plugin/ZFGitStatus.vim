@@ -13,11 +13,11 @@ function! ZFGitStatus(...)
     let option = get(a:, 1, {})
     let all = get(option, 'all', 0)
 
-    redraw | echo '[ZFGitStatus] checking'
+    redraw | echo 'checking'
 
     let paths = split(glob('**/.git', 1), "\n")
     if empty(paths)
-        redraw | echo '[ZFGitStatus] no changes'
+        redraw | echo 'no changes'
         return []
     endif
 
@@ -40,7 +40,7 @@ function! ZFGitStatus(...)
     endfor
 
     if !hasChanges && !all
-        redraw | echo '[ZFGitStatus] no changes'
+        redraw | echo 'no changes'
         return []
     endif
 

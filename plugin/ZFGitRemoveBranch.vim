@@ -32,7 +32,12 @@ function! ZFGitRemoveBranch(name, ...)
         let curBranch = ZFGitGetBranch()
         if curBranch == a:name
             redraw!
-            echo '[ZFGitRemoveBranch] can not remove current branch:'
+            echo 'can not remove current branch:'
+            echo '    ' . a:name
+            return
+        elseif curBranch == 'HEAD'
+            redraw!
+            echo 'can not work on detached HEAD'
             echo '    ' . a:name
             return
         endif
@@ -53,7 +58,7 @@ function! ZFGitRemoveBranch(name, ...)
     call inputrestore()
     if input != 'got it'
         redraw!
-        echo '[ZFGitRemoveBranch] canceled'
+        echo 'canceled'
         return
     endif
 
@@ -62,12 +67,12 @@ function! ZFGitRemoveBranch(name, ...)
 
     if !bang
         redraw!
-        echo '[ZFGitRemoveBranch] removing local branch "' . a:name . '" ... '
+        echo 'removing local branch "' . a:name . '" ... '
         let removeLocalResult = ZFGitCmd('git branch -d ' . a:name)
     endif
 
     redraw!
-    echo '[ZFGitRemoveBranch] removing remote branch "' . a:name . '" ... '
+    echo 'removing remote branch "' . a:name . '" ... '
     let pushResult = ZFGitCmd('git push "' . remoteUrl . '" --delete ' . a:name)
     let pushResult = substitute(pushResult, ':[^:]*@', '@', 'g')
     call ZFGitCmd('git fetch -p -P "' . remoteUrl . '" "+refs/heads/*:refs/remotes/origin/*"')

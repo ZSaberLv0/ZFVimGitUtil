@@ -25,7 +25,7 @@ function! ZFGitBatchPush(...)
     let comment = get(option, 'comment', '')
     let changes = ZFGitStatus()
     if empty(changes)
-        redraw | echo '[ZFGitBatchPush] no changes'
+        redraw | echo 'no changes'
         return {
                     \   'exitCode' : 'ZF_NO_REPO',
                     \   'task' : {},
@@ -42,7 +42,7 @@ function! ZFGitBatchPush(...)
     call inputrestore()
     if input != 'got it'
         redraw!
-        echo '[ZFGitBatchPush] canceled'
+        echo 'canceled'
         return {
                     \   'exitCode' : 'ZF_CANCELED',
                     \   'task' : {},
