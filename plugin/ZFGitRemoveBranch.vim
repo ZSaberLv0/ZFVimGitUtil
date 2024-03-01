@@ -88,7 +88,7 @@ function! ZFGitRemoveBranch(name, ...)
     if get(option, 'local', 1)
         redraw!
         echo 'removing local branch "' . a:name . '" ... '
-        let removeLocalResult = ZFGitCmd('git branch -d ' . a:name)
+        let removeLocalResult = ZFGitCmd('git branch -D ' . a:name)
     endif
 
     if get(option, 'remote', 1)
