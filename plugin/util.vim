@@ -251,7 +251,7 @@ function! ZFGitCheckSsh(url)
     " and the repository exists.
     " error: Could not fetch origin
     let tryFetch = ZFGitCmd('git fetch --all')
-    if exists('v:shell_error') && v:shell_error == '0'
+    if v:shell_error == '0'
         return 0
     endif
 
@@ -407,7 +407,8 @@ function! ZFGitCmdComplete_branch_local(ArgLead, CmdLine, CursorPos)
             continue
         endif
         " * master
-        let line = substitute(line, '^\* *', '', '')
+        " ^\*? *
+        let line = substitute(line, '^\*\= *', '', '')
         let line = s:branchCompleteFix(line, a:ArgLead)
         if !empty(line)
             call add(ret, line)

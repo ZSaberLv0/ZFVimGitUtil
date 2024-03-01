@@ -1,5 +1,6 @@
 
 " merge current branch to specified branch, push, then go back to current branch
+" if toBranch not exists, create a new one
 "
 " option: {
 "   'mode' : '',
@@ -58,67 +59,82 @@ function! ZFGitMergeToAndPush(toBranch, ...)
                     \ }
     endif
 
-    redraw | echo 'checking out branch: ' . a:toBranch
-
-    call ZFGitCmd('git checkout ' . a:toBranch)
-    if exists('v:shell_error') && v:shell_error != 0
-        redraw | echo 'target branch not exist: ' . a:toBranch
-        return {
-                    \   'exitCode' : 'ZF_ERROR',
-                    \   'output' : 'target branch not exist: ' . a:toBranch,
-                    \ }
-    endif
-
-    let taskResult = ZFGitPushQuickly({
-                \   'mode' : 'u',
-                \ })
-    if taskResult['exitCode'] != '0'
-        redraw
-        echo 'fetch failed: ' . taskResult['output']
-
-        let restoreResult = ZFGitCmd('git checkout ' . curBranch)
-        if exists('v:shell_error') && v:shell_error != 0
-            echo 'branch restore failed: ' . restoreResult
-        endif
-
-        echo 'fetch failed: ' . taskResult['output']
-        return {
-                    \   'exitCode' : taskResult['exitCode'],
-                    \   'output' : 'fetch failed: ' . taskResult['output'],
-                    \ }
-    endif
-
     redraw
     let exitCode = '0'
     let output = 'success'
 
-    let mergeResult = ZFGitCmd('git merge ' . curBranch)
-    if exists('v:shell_error') && v:shell_error != 0
-        let exitCode = v:shell_error
-        let output = mergeResult
-        echo output
-        echo "\n"
-        echo printf('merge failed, reset branch "%s" to origin', a:toBranch)
-        call ZFGitCmd('git reset --hard origin/' . a:toBranch)
-    else
-        redraw
-        echo 'pushing to ' . a:toBranch . '... ' . gitInfo['git_remoteurl']
+    echo 'updating... ' . gitInfo.git_remoteurl
+    call ZFGitFetch({
+                \   'prune' : 0,
+                \ })
 
-        silent! let pushResult = ZFGitPushQuickly({'mode' : '!', 'forcePushLocalCommits' : 1})
-        if pushResult['exitCode'] != '0'
-            echo 'push failed: ' . pushResult['output']
-            call ZFGitCmd('git reset --hard origin/' . a:toBranch)
+    redraw
+
+    call ZFGitCmd('git checkout ' . a:toBranch)
+    if v:shell_error == 0
+        echo 'fetching branch: ' . a:toBranch
+        let taskResult = ZFGitPushQuickly({
+                    \   'mode' : 'u',
+                    \ })
+        if taskResult['exitCode'] != '0'
+            redraw
+            let exitCode = taskResult['exitCode']
+            let output = 'fetch failed: ' . taskResult['output']
+            echo output
         else
-            echo pushResult['output']
+            redraw
+
+            let mergeResult = ZFGitCmd('git merge ' . curBranch)
+            if v:shell_error != 0
+                let exitCode = v:shell_error
+                let output = mergeResult
+                echo output
+                echo "\n"
+                echo printf('merge failed, reset branch "%s" to origin', a:toBranch)
+                call ZFGitCmd('git reset --hard origin/' . a:toBranch)
+            else
+                redraw
+                echo 'pushing to ' . a:toBranch . '... ' . gitInfo['git_remoteurl']
+
+                silent! let pushResult = ZFGitPushQuickly({'mode' : '!', 'forcePushLocalCommits' : 1})
+                if pushResult['exitCode'] != '0'
+                    let exitCode = pushResult['exitCode']
+                    let output = 'push failed: ' . pushResult['output']
+                    call ZFGitCmd('git reset --hard origin/' . a:toBranch)
+                else
+                    let output = pushResult['output']
+                    echo output
+                endif
+            endif
+        endif
+    else
+        let branchResult = ZFGitCmd('git checkout -b ' . a:toBranch)
+        if v:shell_error == 0
+            echo 'pushing to ' . a:toBranch . '... ' . gitInfo['git_remoteurl']
+            let taskResult = ZFGitPushQuickly({
+                        \   'mode' : '!',
+                        \ })
+            if taskResult['exitCode'] != '0'
+                redraw
+                let exitCode = taskResult['exitCode']
+                let output = 'push failed: ' . taskResult['output']
+                echo output
+            endif
+        else
+            redraw
+            let exitCode = 'ZF_ERROR'
+            let output = 'branch failed: ' . branchResult
+            echo output
         endif
     endif
 
     let restoreResult = ZFGitCmd('git checkout ' . curBranch)
-    if exists('v:shell_error') && v:shell_error != 0
+    if v:shell_error != 0
         echo restoreResult
-        let exitCode = v:shell_error
-        let output = restoreResult
-        echo 'branch restore failed: ' . output
+        if exitCode == '0'
+            let exitCode = v:shell_error
+            let output = 'branch restore failed: ' . restoreResult
+        endif
     endif
 
     return {

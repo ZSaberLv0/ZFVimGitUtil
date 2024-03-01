@@ -116,7 +116,7 @@ function! ZFGitPushQuickly(...)
 
     call ZFGitCmd('git add -A')
     let stashResult = ZFGitCmd('git stash')
-    if exists('v:shell_error') && v:shell_error != 0
+    if v:shell_error != 0
         redraw!
         echo 'unable to stash: ' . stashResult
         return {
@@ -151,7 +151,7 @@ function! ZFGitPushQuickly(...)
         let pullResult = ZFGitCmd('git pull "' . remoteUrl . '" "' . branch . '"')
     else
         let pullResult = ZFGitCmd('git reset --hard origin/' . branch)
-        if !(exists('v:shell_error') && v:shell_error != '0')
+        if v:shell_error == '0'
             " pull only if remote branch exists
             call ZFGitCmd('git pull "' . remoteUrl . '" "' . branch . '"')
         endif
@@ -204,7 +204,7 @@ function! ZFGitPushQuickly(...)
     call ZFGitCmd('git add -A')
     call ZFGitCmd('git commit -m "' . comment . '"')
     let pushResult = ZFGitCmd('git push "' . remoteUrl . '" HEAD')
-    if !exists('v:shell_error') || v:shell_error == 0
+    if v:shell_error == 0
         call ZFGitCmd('git fetch "' . remoteUrl . '" "+refs/heads/*:refs/remotes/origin/*"')
     else
         call ZFGitCmd('git fetch "' . remoteUrl . '" "+refs/heads/*:refs/remotes/origin/*"')
