@@ -20,7 +20,7 @@ function! ZFGitMergeToAndPush(toBranch, ...)
     let option = get(a:, 1, {})
     let mode = get(option, 'mode', '')
 
-    let curBranch = ZFGitGetBranch()
+    let curBranch = ZFGitGetCurBranch()
     if empty(curBranch)
         echo 'unable to obtain branch'
         return {
@@ -70,7 +70,7 @@ function! ZFGitMergeToAndPush(toBranch, ...)
 
     redraw
 
-    call ZFGitCmd('git checkout ' . a:toBranch)
+    call ZFGitCmd(printf('git checkout "%s"' . a:toBranch))
     if v:shell_error == 0
         echo 'fetching branch: ' . a:toBranch
         let taskResult = ZFGitPushQuickly({
@@ -84,14 +84,14 @@ function! ZFGitMergeToAndPush(toBranch, ...)
         else
             redraw
 
-            let mergeResult = ZFGitCmd('git merge ' . curBranch)
+            let mergeResult = ZFGitCmd(printf('git merge "%s"', curBranch))
             if v:shell_error != 0
                 let exitCode = v:shell_error
                 let output = mergeResult
                 echo output
                 echo "\n"
                 echo printf('merge failed, reset branch "%s" to origin', a:toBranch)
-                call ZFGitCmd('git reset --hard origin/' . a:toBranch)
+                call ZFGitCmd(printf('git reset --hard "origin/%s"', a:toBranch))
             else
                 redraw
                 echo 'pushing to ' . a:toBranch . '... ' . gitInfo['git_remoteurl']
@@ -100,7 +100,7 @@ function! ZFGitMergeToAndPush(toBranch, ...)
                 if pushResult['exitCode'] != '0'
                     let exitCode = pushResult['exitCode']
                     let output = 'push failed: ' . pushResult['output']
-                    call ZFGitCmd('git reset --hard origin/' . a:toBranch)
+                    call ZFGitCmd(printf('git reset --hard "origin/%s"', a:toBranch))
                 else
                     let output = pushResult['output']
                     echo output
@@ -108,7 +108,7 @@ function! ZFGitMergeToAndPush(toBranch, ...)
             endif
         endif
     else
-        let branchResult = ZFGitCmd('git checkout -b ' . a:toBranch)
+        let branchResult = ZFGitCmd(printf('git checkout -b "%s"', a:toBranch))
         if v:shell_error == 0
             echo 'pushing to ' . a:toBranch . '... ' . gitInfo['git_remoteurl']
             let taskResult = ZFGitPushQuickly({
@@ -128,7 +128,7 @@ function! ZFGitMergeToAndPush(toBranch, ...)
         endif
     endif
 
-    let restoreResult = ZFGitCmd('git checkout ' . curBranch)
+    let restoreResult = ZFGitCmd(printf('git checkout "%s"', curBranch))
     if v:shell_error != 0
         echo restoreResult
         if exitCode == '0'

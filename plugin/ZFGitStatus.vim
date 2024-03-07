@@ -30,7 +30,7 @@ function! ZFGitStatus(...)
             let path = '.'
         endif
 
-        let change = split(ZFGitCmd('cd "' . path . '"&& git status -s'), "\n")
+        let change = split(ZFGitCmd(printf('cd "%s" && git status -s', path)), "\n")
         if all || !empty(change)
             if !empty(change)
                 let hasChanges = 1

@@ -173,7 +173,7 @@ Plugin 'ZSaberLv0/ZFVimGitUtil'
     * `git_user_name`
     * `git_user_pwd`
 
-* `ZFGitGetRemote()`
+* `ZFGitGetRemoteUrl()`
 
     parse git remote url
 

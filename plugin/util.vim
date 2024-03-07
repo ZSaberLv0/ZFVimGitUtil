@@ -1,4 +1,12 @@
 
+if !exists('g:zf_git_extra_config')
+    let g:zf_git_extra_config = [
+                \   'git config core.filemode false',
+                \   'git config core.autocrlf false',
+                \   'git config core.safecrlf true',
+                \ ]
+endif
+
 let s:ZFGitPrepare_savedPwd = {}
 let s:ZFGitPrepare_savedPwdPredict = {}
 
@@ -87,8 +95,8 @@ function! ZFGitPrepare(options)
         if confirm
             redraw!
             let items = [
-                        \   ['repo', ZFGitGetRemote()],
-                        \   ['branch', ZFGitGetBranch()],
+                        \   ['repo', ZFGitGetRemoteUrl()],
+                        \   ['branch', ZFGitGetCurBranch()],
                         \   ['', ''],
                         \   ['email', ret.git_user_email],
                         \   ['user', ret.git_user_name],
@@ -188,7 +196,7 @@ function! s:alignedEcho(items)
     endfor
 endfunction
 
-function! ZFGitGetRemote()
+function! ZFGitGetRemoteUrl()
     let url = ZFGitCmd('git remote get-url --all origin')
     let url = substitute(url, '[\r\n]', '', 'g')
     " ^[a-z]+://
@@ -209,7 +217,7 @@ function! ZFGitGetRemote()
     return substitute(url, '://.\+@', '://', '')
 endfunction
 
-function! ZFGitGetBranch()
+function! ZFGitGetCurBranch()
     let ret = substitute(ZFGitCmd('git rev-parse --abbrev-ref HEAD'), '[\r\n]', '', 'g')
     if v:shell_error == 0
         return ret
@@ -218,7 +226,51 @@ function! ZFGitGetBranch()
     endif
 endfunction
 
-function! ZFGitGetCommit()
+function! ZFGitGetAllLocalBranch()
+    let ret = []
+    for line in split(ZFGitCmd('git branch'), "\n")
+        " * (HEAD detached at bbb3ec7)
+        " ^\* \(.*\)$
+        if match(line, '^\* (.*)$') >= 0
+            continue
+        endif
+        " * master
+        " ^\*? *
+        let line = substitute(line, '^\*\= *', '', '')
+        if !empty(line)
+            call add(ret, line)
+        endif
+    endfor
+    return ret
+endfunction
+
+function! ZFGitGetAllRemoteBranch()
+    let ret = []
+    for line in split(ZFGitCmd('git branch -r'), "\n")
+        " origin/HEAD -> origin/master
+        " .*\-> *
+        let line = substitute(line, '.*\-> *', '', '')
+        " ^ *origin\/
+        let line = substitute(line, '^ *origin\/', '', '')
+        if !empty(line)
+            call add(ret, line)
+        endif
+    endfor
+    return ret
+endfunction
+
+function! ZFGitGetAllBranch()
+    let tmp = {}
+    for item in ZFGitGetAllLocalBranch()
+        let tmp[item] = 1
+    endfor
+    for item in ZFGitGetAllRemoteBranch()
+        let tmp[item] = 1
+    endfor
+    return keys(tmp)
+endfunction
+
+function! ZFGitGetCurCommit()
     let ret = system('git log -1 --format=format:"%H"')
     if v:shell_error == 0 && !empty(ret)
         return substitute(ret, '[\r\n]', '', 'g')
@@ -293,6 +345,7 @@ function! ZFGitConfigGet(cmd)
         return ret
     endif
 endfunction
+
 function! ZFGitGetInfo()
     let ret = {
                 \   'git_remoteurl' : '',
@@ -302,7 +355,7 @@ function! ZFGitGetInfo()
                 \   'git_user_pwd' : '',
                 \ }
 
-    let ret.git_remoteurl = ZFGitGetRemote()
+    let ret.git_remoteurl = ZFGitGetRemoteUrl()
     if empty(ret.git_remoteurl)
         return ret
     endif
@@ -384,15 +437,10 @@ endfunction
 
 function! ZFGitCmdComplete_branch_remote(ArgLead, CmdLine, CursorPos)
     let ret = []
-    for line in split(ZFGitCmd('git branch -r'), "\n")
-        " origin/HEAD -> origin/master
-        " .*\-> *
-        let line = substitute(line, '.*\-> *', '', '')
-        " ^ *origin\/
-        let line = substitute(line, '^ *origin\/', '', '')
-        let line = s:branchCompleteFix(line, a:ArgLead)
-        if !empty(line)
-            call add(ret, line)
+    for branch in ZFGitGetAllRemoteBranch()
+        let tmp = s:branchCompleteFix(branch, a:ArgLead)
+        if !empty(tmp)
+            call add(ret, tmp)
         endif
     endfor
     return ret
@@ -400,18 +448,10 @@ endfunction
 
 function! ZFGitCmdComplete_branch_local(ArgLead, CmdLine, CursorPos)
     let ret = []
-    for line in split(ZFGitCmd('git branch'), "\n")
-        " * (HEAD detached at bbb3ec7)
-        " ^\* \(.*\)$
-        if match(line, '^\* (.*)$') >= 0
-            continue
-        endif
-        " * master
-        " ^\*? *
-        let line = substitute(line, '^\*\= *', '', '')
-        let line = s:branchCompleteFix(line, a:ArgLead)
-        if !empty(line)
-            call add(ret, line)
+    for branch in ZFGitGetAllLocalBranch()
+        let tmp = s:branchCompleteFix(branch, a:ArgLead)
+        if !empty(tmp)
+            call add(ret, tmp)
         endif
     endfor
     return ret

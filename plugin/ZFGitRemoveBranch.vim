@@ -11,7 +11,7 @@
 function! ZFGitRemoveBranch(name, ...)
     let option = get(a:, 1, {})
 
-    let url = ZFGitGetRemote()
+    let url = ZFGitGetRemoteUrl()
     if empty(url)
         echo 'unable to parse remote url'
         return
@@ -37,7 +37,7 @@ function! ZFGitRemoveBranch(name, ...)
     endif
 
     if get(option, 'local', 1)
-        let curBranch = ZFGitGetBranch()
+        let curBranch = ZFGitGetCurBranch()
         if curBranch == a:name
             redraw!
             echo 'can not remove current branch:'
@@ -82,21 +82,24 @@ function! ZFGitRemoveBranch(name, ...)
         return
     endif
 
-    call ZFGitCmd('git config user.email "' . gitInfo.git_user_email . '"')
-    call ZFGitCmd('git config user.name "' . gitInfo.git_user_name . '"')
+    call ZFGitCmd(printf('git config user.email "%s"', gitInfo.git_user_email))
+    call ZFGitCmd(printf('git config user.name "%s"', gitInfo.git_user_name))
+    for config in g:zf_git_extra_config
+        call ZFGitCmd(config)
+    endfor
 
     if get(option, 'local', 1)
         redraw!
         echo 'removing local branch "' . a:name . '" ... '
-        let removeLocalResult = ZFGitCmd('git branch -D ' . a:name)
+        let removeLocalResult = ZFGitCmd(printf('git branch -D "%s"', a:name))
     endif
 
     if get(option, 'remote', 1)
         redraw!
         echo 'removing remote branch "' . a:name . '" ... '
-        let pushResult = ZFGitCmd('git push "' . remoteUrl . '" --delete ' . a:name)
+        let pushResult = ZFGitCmd(printf('git push "%s" --delete "%s"', remoteUrl, a:name))
         let pushResult = substitute(pushResult, ':[^:]*@', '@', 'g')
-        call ZFGitCmd('git fetch -p -P "' . remoteUrl . '" "+refs/heads/*:refs/remotes/origin/*"')
+        call ZFGitCmd(printf('git fetch -p -P "%s" "+refs/heads/*:refs/remotes/origin/*"', remoteUrl))
     endif
 
     redraw!

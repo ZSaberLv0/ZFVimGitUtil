@@ -214,20 +214,20 @@ function! s:cleanFileOrDir(cleanInfo, fileOrDir, autoBackup)
         if a:autoBackup
             call s:tryBackup(a:fileOrDir)
         endif
-        call ZFGitCmd('git reset HEAD "' . a:fileOrDir . '"')
-        call ZFGitCmd('git checkout "' . a:fileOrDir . '"')
+        call ZFGitCmd(printf('git reset HEAD "%s"', a:fileOrDir))
+        call ZFGitCmd(printf('git checkout "%s"', a:fileOrDir))
     elseif exists("a:cleanInfo['untracked'][a:fileOrDir]") || exists("a:cleanInfo['ignored'][a:fileOrDir]")
         if a:autoBackup
             call s:tryBackup(a:fileOrDir)
         endif
         if exists("a:cleanInfo['untracked'][a:fileOrDir]")
-            call ZFGitCmd('git reset HEAD "' . a:fileOrDir . '"')
+            call ZFGitCmd(printf('git reset HEAD "%s"', a:fileOrDir))
         endif
         if (has('win32') || has('win64')) && !has('unix')
-            call ZFGitCmd('del /f/q "' . substitute(a:fileOrDir, '/', '\\', 'g') . '"')
-            call ZFGitCmd('rmdir /s/q "' . substitute(a:fileOrDir, '/', '\\', 'g') . '"')
+            call ZFGitCmd(printf('del /f/q "%s"', substitute(a:fileOrDir, '/', '\\', 'g')))
+            call ZFGitCmd(printf('rmdir /s/q "%s"', substitute(a:fileOrDir, '/', '\\', 'g')))
         else
-            call ZFGitCmd('rm -rf "' . a:fileOrDir . '"')
+            call ZFGitCmd(printf('rm -rf "%s"', a:fileOrDir))
         endif
     endif
 endfunction

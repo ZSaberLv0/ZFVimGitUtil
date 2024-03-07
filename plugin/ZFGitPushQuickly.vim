@@ -47,7 +47,7 @@ function! ZFGitPushQuickly(...)
         let gitInfo.choice = 'u'
     endif
 
-    let url = ZFGitGetRemote()
+    let url = ZFGitGetRemoteUrl()
     if empty(url)
         echo 'unable to parse remote url'
         return {
@@ -104,13 +104,9 @@ function! ZFGitPushQuickly(...)
 
     redraw!
     echo 'updating... ' . url
-    call ZFGitCmd('git config user.email "' . gitInfo.git_user_email . '"')
-    call ZFGitCmd('git config user.name "' . gitInfo.git_user_name . '"')
-    for config in get(g:, 'zf_git_extra_config', [
-                \   'git config core.filemode false',
-                \   'git config core.autocrlf false',
-                \   'git config core.safecrlf true',
-                \ ])
+    call ZFGitCmd(printf('git config user.email "%s"', gitInfo.git_user_email))
+    call ZFGitCmd(printf('git config user.name "%s"', gitInfo.git_user_name))
+    for config in g:zf_git_extra_config
         call ZFGitCmd(config)
     endfor
 
@@ -124,7 +120,7 @@ function! ZFGitPushQuickly(...)
                     \   'output' : 'unable to stash: ' . stashResult,
                     \ }
     endif
-    let branch = ZFGitGetBranch()
+    let branch = ZFGitGetCurBranch()
     if branch == 'HEAD'
         redraw!
         echo 'unable to parse git branch, maybe in detached HEAD?'
@@ -145,15 +141,15 @@ function! ZFGitPushQuickly(...)
                         \ }
         endif
     endif
-    call ZFGitCmd('git fetch "' . remoteUrl . '" "+refs/heads/*:refs/remotes/origin/*"')
+    call ZFGitCmd(printf('git fetch "%s" "+refs/heads/*:refs/remotes/origin/*"', remoteUrl))
 
     if softPullMode
-        let pullResult = ZFGitCmd('git pull "' . remoteUrl . '" "' . branch . '"')
+        let pullResult = ZFGitCmd(printf('git pull "%s" "%s"', remoteUrl, branch))
     else
-        let pullResult = ZFGitCmd('git reset --hard origin/' . branch)
+        let pullResult = ZFGitCmd(printf('git reset --hard "origin/%s"', branch))
         if v:shell_error == '0'
             " pull only if remote branch exists
-            call ZFGitCmd('git pull "' . remoteUrl . '" "' . branch . '"')
+            call ZFGitCmd(printf('git pull "%s" "%s"', remoteUrl, branch))
         endif
     endif
 
@@ -202,25 +198,25 @@ function! ZFGitPushQuickly(...)
     redraw!
     echo 'pushing... ' . url
     call ZFGitCmd('git add -A')
-    call ZFGitCmd('git commit -m "' . comment . '"')
-    let pushResult = ZFGitCmd('git push "' . remoteUrl . '" HEAD')
+    call ZFGitCmd(printf('git commit -m "%s"', comment))
+    let pushResult = ZFGitCmd(printf('git push "%s" HEAD', remoteUrl))
     if v:shell_error == 0
-        call ZFGitCmd('git fetch "' . remoteUrl . '" "+refs/heads/*:refs/remotes/origin/*"')
+        call ZFGitCmd(printf('git fetch "%s" "+refs/heads/*:refs/remotes/origin/*"', remoteUrl))
     else
-        call ZFGitCmd('git fetch "' . remoteUrl . '" "+refs/heads/*:refs/remotes/origin/*"')
+        call ZFGitCmd(printf('git fetch "%s" "+refs/heads/*:refs/remotes/origin/*"', remoteUrl))
         " soft reset to undo commit,
         " prevent next push's hard reset from causing commits dropped
-        call ZFGitCmd('git reset origin/' . branch)
+        call ZFGitCmd(printf('git reset "origin/%s"', branch))
     endif
     redraw!
 
     " try to auto update upstream
-    let upstream = ZFGitCmd('git rev-parse --abbrev-ref ' . branch . '@{upstream}')
+    let upstream = ZFGitCmd(printf('git rev-parse --abbrev-ref "%s@{upstream}"', branch))
     if match(upstream, '[a-z]+\/' . branch) < 0
         " git 1.8.0 or above
-        call ZFGitCmd('git branch --set-upstream-to=origin/' . branch . ' ' . branch)
+        call ZFGitCmd(printf('git branch --set-upstream-to="origin/%s" "%s"', branch, branch))
         " git 1.7 or below
-        call ZFGitCmd('git branch --set-upstream ' . branch . ' origin/' . branch)
+        call ZFGitCmd(printf('git branch --set-upstream "%s" "origin/%s"', branch, branch))
     endif
 
     let pushResult = printf("REPO: %s\n%s", url, pushResult)

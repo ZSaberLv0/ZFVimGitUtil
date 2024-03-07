@@ -3,7 +3,7 @@ let s:scriptPath = expand('<sfile>:p:h:h') . '/misc/'
 
 " hard remove all history of git repo
 function! ZFGitHardRemoveAllHistory()
-    let url = ZFGitGetRemote()
+    let url = ZFGitGetRemoteUrl()
     if empty(url)
         echo 'unable to parse remote url'
         return
@@ -32,8 +32,11 @@ function! ZFGitHardRemoveAllHistory()
         return
     endif
 
-    call ZFGitCmd('git config user.email "' . gitInfo.git_user_email . '"')
-    call ZFGitCmd('git config user.name "' . gitInfo.git_user_name . '"')
+    call ZFGitCmd(printf('git config user.email "%s"', gitInfo.git_user_email))
+    call ZFGitCmd(printf('git config user.name "%s"', gitInfo.git_user_name))
+    for config in g:zf_git_extra_config
+        call ZFGitCmd(config)
+    endfor
 
     if (has('win32') || has('win64')) && !has('unix')
         let cmd = '"' . s:scriptPath . 'git_hard_remove_all_history.bat' . '"'
