@@ -26,7 +26,7 @@ function! ZFGitBatchPull(...)
     let clean = get(option, 'clean', 0)
     let gc = get(option, 'gc', clean)
 
-    redraw!
+    redraw
     let hint = "[ZFGitBatchPull] try to pull all repos under current dir using default config"
     let hint .= "\n"
     let hint .= "\nif you really know what you are doing,"
@@ -35,7 +35,7 @@ function! ZFGitBatchPull(...)
     let input = input(hint)
     call inputrestore()
     if input != 'got it'
-        redraw!
+        redraw
         echo 'canceled'
         return {
                     \   'exitCode' : 'ZF_CANCELED',
@@ -43,7 +43,7 @@ function! ZFGitBatchPull(...)
                     \ }
     endif
 
-    redraw! | echo 'checking repos under current dir'
+    redraw | echo 'checking repos under current dir...'
     silent! let changes = ZFGitStatus({
                 \   'all' : 1,
                 \ })
@@ -58,7 +58,7 @@ function! ZFGitBatchPull(...)
     let pwdSaved = getcwd()
     let taskHint = []
 
-    let error = ''
+    let exitCode = ''
     let task = {}
 
     for path in keys(changes)
@@ -87,7 +87,7 @@ function! ZFGitBatchPull(...)
         if !empty(taskResult)
             call add(taskHint, taskResult['output'])
         endif
-        let taskResult['changes'] = changes['path']
+        let taskResult['changes'] = changes[path]
         let task[path] = taskResult
         if !taskSuccess
             if exitCode != ''
@@ -101,10 +101,10 @@ function! ZFGitBatchPull(...)
     execute 'cd ' . substitute(pwdSaved, ' ', '\\ ', 'g')
     let taskHintText = join(taskHint, "\n")
     let @t = taskHintText
-    redraw!
+    redraw
     echo taskHintText
     return {
-                \   'exitCode' : (error == '' ? '0' : error),
+                \   'exitCode' : (exitCode == '' ? '0' : exitCode),
                 \   'task' : task,
                 \ }
 endfunction

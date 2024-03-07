@@ -163,7 +163,7 @@ function! ZF_GitClean_action()
         return
     endif
 
-    redraw!
+    redraw
     echo 'perform git repo cleanup?'
     if exists('*ZFBackupSave')
         echo '  (Y)es without backup'

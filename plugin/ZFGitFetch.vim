@@ -34,7 +34,7 @@ function! ZFGitFetch(...)
         let remoteUrl = gitInfo.git_remoteurl
     endif
 
-    redraw!
+    redraw
     echo 'updating... ' . gitInfo.git_remoteurl
     call ZFGitCmd(printf('git config user.email "%s"', gitInfo.git_user_email))
     call ZFGitCmd(printf('git config user.name "%s"', gitInfo.git_user_name))

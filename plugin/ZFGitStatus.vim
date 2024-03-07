@@ -13,7 +13,7 @@ function! ZFGitStatus(...)
     let option = get(a:, 1, {})
     let all = get(option, 'all', 0)
 
-    redraw | echo 'checking'
+    redraw | echo 'checking...'
 
     let paths = split(glob('**/.git', 1), "\n")
     if empty(paths)

@@ -62,7 +62,7 @@ function! ZFGitPrepare(options)
     while 1
         if reInput || empty(ret.git_user_email)
             let reInput = 1
-            redraw!
+            redraw
             call inputsave()
             let ret.git_user_email = input('[' . module . '] input email: ', ret.git_user_email)
             call inputrestore()
@@ -72,7 +72,7 @@ function! ZFGitPrepare(options)
         endif
         if reInput || empty(ret.git_user_name)
             let reInput = 1
-            redraw!
+            redraw
             call inputsave()
             let ret.git_user_name = input('[' . module . '] input user name: ', ret.git_user_name)
             call inputrestore()
@@ -81,7 +81,7 @@ function! ZFGitPrepare(options)
             endif
         endif
         if needPwd && reInput
-            redraw!
+            redraw
             call inputsave()
             let ret.git_user_pwd = inputsecret('[' . module . '] input user pwd: ', ret.git_user_pwd)
             call inputrestore()
@@ -93,7 +93,7 @@ function! ZFGitPrepare(options)
         endif
 
         if confirm
-            redraw!
+            redraw
             let items = [
                         \   ['repo', ZFGitGetRemoteUrl()],
                         \   ['branch', ZFGitGetCurBranch()],
@@ -140,7 +140,7 @@ function! ZFGitPrepare(options)
         endif
 
         if needPwd && empty(ret.git_user_pwd)
-            redraw!
+            redraw
             call inputsave()
             let ret.git_user_pwd = inputsecret('[' . module . '] input user pwd: ', ret.git_user_pwd)
             call inputrestore()
@@ -154,7 +154,7 @@ function! ZFGitPrepare(options)
         break
     endwhile
 
-    redraw!
+    redraw
     if empty(ret.git_user_email) || empty(ret.git_user_name)
         echo '[' . module . '] canceled'
         return {}
@@ -311,7 +311,7 @@ function! ZFGitCheckSsh(url)
     let fetchHint = substitute(fetchHint, '[\r\n]\+$', '', 'g')
     let fetchHint = substitute(fetchHint, '\([\r\n]\+\)', '\1    ', 'g')
 
-    redraw!
+    redraw
     let hint = "NOTE: ssh repo detected:"
     let hint .= "\n    " . a:url
     let hint .= "\n"
@@ -330,7 +330,7 @@ function! ZFGitCheckSsh(url)
     let input = input(hint)
     call inputrestore()
     if input != 'got it'
-        redraw!
+        redraw
         echo 'canceled'
         return 1
     endif

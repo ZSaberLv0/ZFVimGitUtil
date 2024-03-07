@@ -41,7 +41,7 @@ function! ZFGitBatchPush(...)
     let input = input(hint)
     call inputrestore()
     if input != 'got it'
-        redraw!
+        redraw
         echo 'canceled'
         return {
                     \   'exitCode' : 'ZF_CANCELED',
@@ -52,7 +52,7 @@ function! ZFGitBatchPush(...)
     let pwdSaved = getcwd()
     let taskHint = []
 
-    let error = ''
+    let exitCode = ''
     let task = {}
 
     for path in keys(changes)
@@ -76,7 +76,7 @@ function! ZFGitBatchPush(...)
         if !empty(taskResult)
             call add(taskHint, taskResult['output'])
         endif
-        let taskResult['changes'] = changes['path']
+        let taskResult['changes'] = changes[path]
         let task[path] = taskResult
         if !taskSuccess
             if exitCode != ''
@@ -90,10 +90,10 @@ function! ZFGitBatchPush(...)
     execute 'cd ' . substitute(pwdSaved, ' ', '\\ ', 'g')
     let taskHintText = join(taskHint, "\n")
     let @t = taskHintText
-    redraw!
+    redraw
     echo taskHintText
     return {
-                \   'exitCode' : (error == '' ? '0' : error),
+                \   'exitCode' : (exitCode == '' ? '0' : exitCode),
                 \   'task' : task,
                 \ }
 endfunction

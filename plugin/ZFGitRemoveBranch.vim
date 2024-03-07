@@ -39,12 +39,12 @@ function! ZFGitRemoveBranch(name, ...)
     if get(option, 'local', 1)
         let curBranch = ZFGitGetCurBranch()
         if curBranch == a:name
-            redraw!
+            redraw
             echo 'can not remove current branch:'
             echo '    ' . a:name
             return
         elseif curBranch == 'HEAD'
-            redraw!
+            redraw
             echo 'can not work on detached HEAD'
             echo '    ' . a:name
             return
@@ -62,7 +62,7 @@ function! ZFGitRemoveBranch(name, ...)
         if get(option, 'remote', 1)
             let targetHint = 'REMOTE'
         else
-            redraw!
+            redraw
             echo 'no target to remove'
             echo '    ' . a:name
             return
@@ -77,7 +77,7 @@ function! ZFGitRemoveBranch(name, ...)
     let input = input(hint)
     call inputrestore()
     if input != 'got it'
-        redraw!
+        redraw
         echo 'canceled'
         return
     endif
@@ -89,20 +89,20 @@ function! ZFGitRemoveBranch(name, ...)
     endfor
 
     if get(option, 'local', 1)
-        redraw!
+        redraw
         echo 'removing local branch "' . a:name . '" ... '
         let removeLocalResult = ZFGitCmd(printf('git branch -D "%s"', a:name))
     endif
 
     if get(option, 'remote', 1)
-        redraw!
+        redraw
         echo 'removing remote branch "' . a:name . '" ... '
         let pushResult = ZFGitCmd(printf('git push "%s" --delete "%s"', remoteUrl, a:name))
         let pushResult = substitute(pushResult, ':[^:]*@', '@', 'g')
         call ZFGitCmd(printf('git fetch -p -P "%s" "+refs/heads/*:refs/remotes/origin/*"', remoteUrl))
     endif
 
-    redraw!
+    redraw
     if get(option, 'local', 1)
         echo 'remove local branch:'
         echo removeLocalResult

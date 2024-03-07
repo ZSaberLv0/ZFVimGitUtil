@@ -78,13 +78,13 @@ function! ZFGitPushQuickly(...)
             let hint .= "\n"
             let hint .= "\nif you really know what you are doing,"
             let hint .= "\nenter `got it` to continue: "
-            redraw!
+            redraw
             call inputsave()
             let input = input(hint)
             call inputrestore()
         endif
         if input != 'got it'
-            redraw!
+            redraw
             echo 'canceled'
             return {
                         \  'exitCode' : 'ZF_CANCELED',
@@ -102,7 +102,7 @@ function! ZFGitPushQuickly(...)
         let remoteUrl = url
     endif
 
-    redraw!
+    redraw
     echo 'updating... ' . url
     call ZFGitCmd(printf('git config user.email "%s"', gitInfo.git_user_email))
     call ZFGitCmd(printf('git config user.name "%s"', gitInfo.git_user_name))
@@ -113,7 +113,7 @@ function! ZFGitPushQuickly(...)
     call ZFGitCmd('git add -A')
     let stashResult = ZFGitCmd('git stash')
     if v:shell_error != 0
-        redraw!
+        redraw
         echo 'unable to stash: ' . stashResult
         return {
                     \   'exitCode' : '' . v:shell_error,
@@ -122,7 +122,7 @@ function! ZFGitPushQuickly(...)
     endif
     let branch = ZFGitGetCurBranch()
     if branch == 'HEAD'
-        redraw!
+        redraw
         echo 'unable to parse git branch, maybe in detached HEAD?'
         return {
                     \   'exitCode' : 'ZF_ERROR',
@@ -130,9 +130,9 @@ function! ZFGitPushQuickly(...)
                     \ }
     endif
     if empty(branch)
-        redraw!
+        redraw
         let branch = input('no branch, enter new branch name to create: ', 'master')
-        redraw!
+        redraw
         if empty(branch)
             echo 'canceled'
             return {
@@ -168,7 +168,7 @@ function! ZFGitPushQuickly(...)
         call histadd('/', @/)
         normal! ggnzz
 
-        redraw!
+        redraw
         let msg = 'CONFLICTS:'
         for conflictFile in conflictFiles
             let msg .= "\n" . '    ' . conflictFile
@@ -184,7 +184,7 @@ function! ZFGitPushQuickly(...)
 
     if gitInfo.choice == 'u'
         call ZFGitCmd('git reset HEAD')
-        redraw!
+        redraw
         let msg = 'REPO: ' . url
         let msg .= "\n" . pullResult
         let msg .= "\n" . ZFGitCmd('git show -s --format=%B')
@@ -195,7 +195,7 @@ function! ZFGitPushQuickly(...)
                     \ }
     endif
 
-    redraw!
+    redraw
     echo 'pushing... ' . url
     call ZFGitCmd('git add -A')
     call ZFGitCmd(printf('git commit -m "%s"', comment))
@@ -208,7 +208,7 @@ function! ZFGitPushQuickly(...)
         " prevent next push's hard reset from causing commits dropped
         call ZFGitCmd(printf('git reset "origin/%s"', branch))
     endif
-    redraw!
+    redraw
 
     " try to auto update upstream
     let upstream = ZFGitCmd(printf('git rev-parse --abbrev-ref "%s@{upstream}"', branch))

@@ -27,7 +27,7 @@ function! ZFGitHardRemoveAllHistory()
     let input = input(hint)
     call inputrestore()
     if input != 'got it'
-        redraw!
+        redraw
         echo 'canceled'
         return
     endif
@@ -49,13 +49,13 @@ function! ZFGitHardRemoveAllHistory()
                 \ . ' "' . gitInfo.git_user_name . '"'
                 \ . ' "' . gitInfo.git_user_pwd . '"'
 
-    redraw!
+    redraw
     echo 'running... ' . gitInfo['git_remoteurl']
 
     " strip password
     let pushResult = ZFGitCmd(cmd)
     let pushResult = substitute(pushResult, ':[^:]*@', '@', 'g')
-    redraw!
+    redraw
     let moreSaved = &more
     set nomore
     echo pushResult
