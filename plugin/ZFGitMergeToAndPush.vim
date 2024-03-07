@@ -70,7 +70,7 @@ function! ZFGitMergeToAndPush(toBranch, ...)
 
     redraw
 
-    call ZFGitCmd(printf('git checkout "%s"' . a:toBranch))
+    call ZFGitCmd(printf('git checkout "%s"', a:toBranch))
     if v:shell_error == 0
         echo 'fetching branch: ' . a:toBranch
         let taskResult = ZFGitPushQuickly({
