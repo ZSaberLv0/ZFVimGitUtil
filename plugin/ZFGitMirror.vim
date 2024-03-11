@@ -74,3 +74,65 @@ function! ZFGitMirror(option)
                 \ }
 endfunction
 
+function! ZFGitMirrorGuide(bang)
+    let local = (a:bang == '!')
+    silent! let mirrorOld = ZFGitMirror({
+                \   'local' : local,
+                \   'reset' : 0,
+                \ })
+
+    echo '[ZFGitMirror] current git mirror:'
+    if empty(mirrorOld['mirrorFrom'])
+        echo '    NONE'
+    else
+        echo printf('    %s => %s', mirrorOld['mirrorFrom'], mirrorOld['mirrorTo'])
+    endif
+    echo "\n"
+    echo 'input new mirror or NONE to clear'
+    echo '    example 1: https://github.com => https://some_mirror.com'
+    echo '    example 2: https:// => https://some_mirror.com'
+    echo '    example 3: git:// => https://some_mirror.com'
+    echo "\n"
+
+    call inputsave()
+    let mirrorFromNew = input('    mirrorFrom: ')
+    call inputrestore()
+    echo "\n"
+
+    if !empty(mirrorFromNew) && mirrorFromNew != 'NONE'
+        call inputsave()
+        let mirrorToNew = input('    mirrorTo: ')
+        call inputrestore()
+        echo "\n"
+    else
+        if mirrorFromNew == 'NONE'
+            let mirrorToNew = 'NONE'
+        else
+            let mirrorToNew = ''
+        endif
+    endif
+
+    if empty(mirrorFromNew) || empty(mirrorToNew)
+        redraw
+        call ZFGitMirror({
+                    \   'local' : local,
+                    \ })
+        return
+    endif
+
+    redraw
+    if mirrorFromNew == 'NONE'
+        call ZFGitMirror({
+                    \   'local' : local,
+                    \   'reset' : 1,
+                    \ })
+        return
+    endif
+    call ZFGitMirror({
+                \   'local' : local,
+                \   'mirrorFrom' : mirrorFromNew,
+                \   'mirrorTo' : mirrorToNew,
+                \ })
+endfunction
+command! -nargs=0 ZFGitMirrorGuide :call ZFGitMirrorGuide(<q-bang>)
+
