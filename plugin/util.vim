@@ -267,7 +267,7 @@ function! ZFGitGetAllBranch()
     for item in ZFGitGetAllRemoteBranch()
         let tmp[item] = 1
     endfor
-    return keys(tmp)
+    return sort(keys(tmp))
 endfunction
 
 function! ZFGitGetCurCommit()
@@ -432,7 +432,7 @@ function! ZFGitCmdComplete_branch(ArgLead, CmdLine, CursorPos)
     for item in ZFGitCmdComplete_branch_remote(a:ArgLead, a:CmdLine, a:CursorPos)
         let tmp[item] = 1
     endfor
-    return keys(tmp)
+    return sort(keys(tmp))
 endfunction
 
 function! ZFGitCmdComplete_branch_remote(ArgLead, CmdLine, CursorPos)

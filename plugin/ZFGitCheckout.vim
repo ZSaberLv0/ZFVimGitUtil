@@ -21,7 +21,7 @@ function! ZFGitCheckout(branch)
 
     let candidateHint = ['choose branch to checkout:']
     for i in range(len(candidate))
-        call add(candidateHint, printf('    %s: %s', i + 1, candidate[i]))
+        call add(candidateHint, printf('    %2s: %s', i + 1, candidate[i]))
     endfor
     let choice = inputlist(candidateHint)
 
