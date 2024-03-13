@@ -8,6 +8,7 @@ function! ZFGitCheckout(branch)
     let pattern = substitute(a:branch, '\.', '\\\.', 'g')
     let pattern = substitute(pattern, '\*', '\.\*', 'g')
 
+    let curBranch = ZFGitGetCurBranch()
     let allBranch = ZFGitGetAllBranch()
     let candidate = []
     for branch in allBranch
@@ -19,19 +20,23 @@ function! ZFGitCheckout(branch)
         let candidate = allBranch
     endif
 
-    let candidateHint = ['choose branch to checkout:']
+    let candidateHint = []
+    call add(candidateHint, 'choose branch to checkout:')
+    call add(candidateHint, '')
     for i in range(len(candidate))
-        call add(candidateHint, printf('    %2s: %s', i + 1, candidate[i]))
+        call add(candidateHint, printf('  %s%2s: %s', (candidate[i] == curBranch ? '=>' : '  '), i + 1, candidate[i]))
     endfor
+    call add(candidateHint, '')
     let choice = inputlist(candidateHint)
+    let choice = choice - 1
 
     redraw
-    if choice <= 0 || choice >= len(candidate)
+    if choice < 0 || choice >= len(candidate)
         echo 'canceled'
         return
     endif
 
-    echo ZFGitCmd(printf('git checkout "%s"', candidate[choice]))
+    " echo ZFGitCmd(printf('git checkout "%s"', candidate[choice]))
 endfunction
 command! -nargs=? -complete=customlist,ZFGitCmdComplete_branch ZFGitCheckout :call ZFGitCheckout(<q-args>)
 
