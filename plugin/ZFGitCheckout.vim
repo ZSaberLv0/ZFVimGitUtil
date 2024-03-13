@@ -19,6 +19,11 @@ function! ZFGitCheckout(branch)
         endif
         let i -= 1
     endwhile
+    let curBranchIndex = index(localBranch, curBranch)
+    if curBranchIndex > 0 && curBranchIndex < len(curBranch) - 1
+        call remove(localBranch, curBranchIndex)
+        call insert(localBranch, curBranch, 0)
+    endif
 
     let remoteBranch = ZFGitGetAllRemoteBranch()
     let i = len(remoteBranch) - 1
