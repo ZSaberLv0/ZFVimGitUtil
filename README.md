@@ -44,25 +44,40 @@ Plugin 'ZSaberLv0/ZFVimGitUtil'
 
             `git fetch --all`, if fetch success without password required, then you are done
 
-* `:ZFGitBatchPull`
+* `:ZFGitBatchPull` / `:ZFGitBatchPush [comment]`
 
     find and go through all git repo under cwd,
-    and try to pull
-
-* `:ZFGitBatchPush [comment]`
-
-    find and go through all git repo under cwd,
-    and try to push
+    and try to pull/push
 
 * `:ZFGitClean`
 
     fill a temp file with untracked and ignored files,
     save the temp file to remove all of these files
 
+* `:ZFGitFetch`
+
+    quickly fetch from remote, and prune local and remote merged branches
+
+* `:ZFGitCheckout`
+
+    quickly switch between branches
+
+* `:ZFGitMergeToAndPush`
+
+    merge current branch to specified branch, push, then go back to current branch
+
+* `:ZFGitRemoveBranch`
+
+    remove branch from remote and local quickly
+
 * `:ZFGitStatus`
 
     find and go through all git repo under cwd,
     echo its changes by `git status -s`
+
+* `:ZFGitMirror`
+
+    config git mirror quickly
 
 * `:ZFGitHardRemoveAllHistory`
 
@@ -139,11 +154,12 @@ Plugin 'ZSaberLv0/ZFVimGitUtil'
     ```
 
 
-# Functions
+# Util functions
 
 * `ZFGitPwdSet(git_remoteurl, git_user_name, git_user_pwd)`
 
     update the password stored by `ZFGitPushQuickly`,
+    cached in memory until vim exit,
     set empty `git_user_pwd` to remove saved password
 
 * `ZFGitPrepare(options)`
@@ -173,10 +189,6 @@ Plugin 'ZSaberLv0/ZFVimGitUtil'
     * `git_user_name`
     * `git_user_pwd`
 
-* `ZFGitGetRemoteUrl()`
-
-    parse git remote url
-
 * `ZFGitGetInfo()`
 
     return current git config (see `ZFGitPushQuickly` above)
@@ -187,4 +199,19 @@ Plugin 'ZSaberLv0/ZFVimGitUtil'
     * `git_user_email`
     * `git_user_name`
     * `git_user_pwd`
+
+* get various info
+
+    * `ZFGitGetRemoteUrl()`
+    * `ZFGitGetCurCommit()`
+    * `ZFGitGetCurBranch()`
+    * `ZFGitGetAllLocalBranch()`
+    * `ZFGitGetAllRemoteBranch()`
+    * `ZFGitGetAllBranch()`
+
+* command line complete
+
+    * `ZFGitCmdComplete_branch`
+    * `ZFGitCmdComplete_branch_remote`
+    * `ZFGitCmdComplete_branch_local`
 
