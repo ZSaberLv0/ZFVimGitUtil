@@ -57,16 +57,24 @@ function! ZFGitTmpStash(file)
         return
     endif
     if !empty(skippedHint)
-        echo 'skipped:'
-        for item in skippedHint
-            echo item
-        endfor
+        if len(skippedHint) == 1
+            echo 'skipped: ' . skippedHint[0]
+        else
+            echo 'skipped:'
+            for item in skippedHint
+                echo item
+            endfor
+        endif
     endif
     if !empty(hint)
-        echo 'stashed:'
-        for item in hint
-            echo item
-        endfor
+        if len(hint) == 1
+            echo 'stashed: ' . hint[0]
+        else
+            echo 'stashed:'
+            for item in hint
+                echo item
+            endfor
+        endif
     endif
 endfunction
 
@@ -99,10 +107,14 @@ function! ZFGitTmpStashDrop(...)
     if empty(hint)
         echo 'no stashes'
     else
-        echo 'stash dropped:'
-        for item in hint
-            echo item
-        endfor
+        if len(hint) == 1
+            echo 'stash dropped: ' . hint[0]
+        else
+            echo 'stash dropped:'
+            for item in hint
+                echo item
+            endfor
+        endif
     endif
 endfunction
 
