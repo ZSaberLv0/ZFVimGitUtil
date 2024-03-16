@@ -1,12 +1,12 @@
 
-command! -nargs=+ -complete=customlist,ZFGitCmdComplete_changedPath ZFGitTmpStash :call ZFGitTmpStash(<q-args>)
+command! -nargs=* -complete=customlist,ZFGitCmdComplete_changedPath ZFGitTmpStash :call ZFGitTmpStash(<q-args>)
 command! -nargs=* -complete=customlist,ZFGitCmdComplete_stashDrop ZFGitTmpStashDrop :call ZFGitTmpStashDrop(<q-args>)
 command! -nargs=0 ZFGitTmpStashList :call ZFGitTmpStashList()
 command! -nargs=0 ZFGitTmpStashPop :call ZFGitTmpStashPop()
 
 " ============================================================
 function! ZFGitTmpStash(file)
-    if a:file == '*'
+    if a:file == '*' || empty(a:file)
         let statuses = ZFGitCmd(printf('git -c "core.quotepath=false" status -s'))
     else
         let statuses = ZFGitCmd(printf('git -c "core.quotepath=false" status -s "%s"', a:file))
@@ -78,8 +78,20 @@ function! ZFGitTmpStash(file)
     endif
 endfunction
 
+" param 0 : fileOrEmpty
+" param 1 : {
+"   'confirm' : 1/0,
+" }
 function! ZFGitTmpStashDrop(...)
     let fileOrEmpty = get(a:, 1, '')
+    let option = get(a:, 2, {})
+    let confirm = get(option, 'confirm', -1)
+    if confirm == -1 && !empty(fileOrEmpty)
+        let confirm = 0
+    elseif confirm != 0
+        let confirm = 1
+    endif
+
     if empty(fileOrEmpty)
         let toCheck = []
         silent! let status = ZFGitTmpStashList()
@@ -94,27 +106,60 @@ function! ZFGitTmpStashDrop(...)
     else
         let toCheck = [fileOrEmpty]
     endif
-    let hint = []
-    for file in toCheck
-        if filereadable(printf('%s/%s', s:basePath, file)) || isdirectory(printf('%s/%s', s:basePath, file))
-            call s:rm(printf('%s/%s', s:basePath, file))
-            call add(hint, '  D ' . file)
-        elseif filereadable(printf('%s/%s%s', s:basePath, s:delToken, file))
-            call s:rm(printf('%s/%s%s', s:basePath, s:delToken, file))
-            call add(hint, '    ' . file)
+
+    while 1
+        let hint = []
+        for file in toCheck
+            if filereadable(printf('%s/%s', s:basePath, file)) || isdirectory(printf('%s/%s', s:basePath, file))
+                if !confirm
+                    call s:rm(printf('%s/%s', s:basePath, file))
+                endif
+                call add(hint, '    ' . file)
+            elseif filereadable(printf('%s/%s%s', s:basePath, s:delToken, file))
+                if !confirm
+                    call s:rm(printf('%s/%s%s', s:basePath, s:delToken, file))
+                endif
+                call add(hint, '  D ' . file)
+            endif
+        endfor
+        if empty(hint)
+            echo 'no stashes'
+            return
         endif
-    endfor
-    if empty(hint)
-        echo 'no stashes'
-    else
-        if len(hint) == 1
-            echo 'stash dropped: ' . hint[0]
-        else
-            echo 'stash dropped:'
+
+        if confirm
+            echo 'confirm to drop all stashes?'
             for item in hint
                 echo item
             endfor
+            echo "\n"
+            let confirmHint = 'WARNING: can not undo'
+            let confirmHint .= "\nenter `got it` to continue: "
+            call inputsave()
+            let input = input(confirmHint)
+            call inputrestore()
+            redraw
+            if input != 'got it'
+                echo 'canceled'
+                return
+            endif
+            let confirm = 0
+        else
+            break
         endif
+    endwhile
+
+    if len(hint) == 1
+        echo 'stash dropped: ' . hint[0]
+    else
+        echo 'stash dropped:'
+        for item in hint
+            echo item
+        endfor
+    endif
+
+    if empty(fileOrEmpty)
+        call s:rm(s:basePath)
     endif
 endfunction
 
