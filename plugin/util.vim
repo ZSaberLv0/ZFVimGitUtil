@@ -424,6 +424,26 @@ function! ZFGitCmd(cmd)
     endif
 endfunction
 
+" ============================================================
+" ArgLead: aa/b
+" line: aa/bb/cc
+" to: aa/bb, instead: aa/bb/cc
+function! ZFGitPathCompleteFix(line, ArgLead)
+    if !empty(a:ArgLead)
+                \ && match(a:line, '\V\^' . a:ArgLead) < 0
+        return ''
+    endif
+
+    let match = matchstr(a:line, '\V\^' . a:ArgLead)
+    let tail = strpart(a:line, len(match))
+    let pos = match(tail, '/')
+    if pos < 0
+        return a:line
+    else
+        return match . strpart(tail, 0, pos + 1)
+    endif
+endfunction
+
 function! ZFGitCmdComplete_branch(ArgLead, CmdLine, CursorPos)
     let tmp = {}
     for item in ZFGitCmdComplete_branch_local(a:ArgLead, a:CmdLine, a:CursorPos)
@@ -438,7 +458,7 @@ endfunction
 function! ZFGitCmdComplete_branch_remote(ArgLead, CmdLine, CursorPos)
     let ret = []
     for branch in ZFGitGetAllRemoteBranch()
-        let tmp = s:branchCompleteFix(branch, a:ArgLead)
+        let tmp = ZFGitPathCompleteFix(branch, a:ArgLead)
         if !empty(tmp)
             call add(ret, tmp)
         endif
@@ -449,7 +469,7 @@ endfunction
 function! ZFGitCmdComplete_branch_local(ArgLead, CmdLine, CursorPos)
     let ret = []
     for branch in ZFGitGetAllLocalBranch()
-        let tmp = s:branchCompleteFix(branch, a:ArgLead)
+        let tmp = ZFGitPathCompleteFix(branch, a:ArgLead)
         if !empty(tmp)
             call add(ret, tmp)
         endif
@@ -457,22 +477,26 @@ function! ZFGitCmdComplete_branch_local(ArgLead, CmdLine, CursorPos)
     return ret
 endfunction
 
-" ArgLead: aa/b
-" line: aa/bb/cc
-" to: aa/bb, instead: aa/bb/cc
-function! s:branchCompleteFix(line, ArgLead)
-    if !empty(a:ArgLead)
-                \ && match(a:line, '\V\^' . a:ArgLead) < 0
-        return ''
+function! ZFGitCmdComplete_changedPath(ArgLead, CmdLine, CursorPos)
+    let statuses = ZFGitCmd('git -c "core.quotepath=false" status -s')
+    if empty(statuses) || v:shell_error != '0'
+        return []
     endif
-
-    let match = matchstr(a:line, '\V\^' . a:ArgLead)
-    let tail = strpart(a:line, len(match))
-    let pos = match(tail, '/')
-    if pos < 0
-        return a:line
-    else
-        return match . strpart(tail, 0, pos + 1)
-    endif
+    let ret = []
+    for status in split(statuses, "\n")
+        if len(status) <= 3
+            continue
+        endif
+        " ^.{2} "?(.+)[\/"]*$
+        let file = substitute(status, '^.\{2} "\=\(.\+\)[\/"]*$', '\1', '')
+        if file == status
+            continue
+        endif
+        let tmp = ZFGitPathCompleteFix(file, a:ArgLead)
+        if !empty(tmp)
+            call add(ret, tmp)
+        endif
+    endfor
+    return sort(ret)
 endfunction
 

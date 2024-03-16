@@ -214,4 +214,5 @@ Plugin 'ZSaberLv0/ZFVimGitUtil'
     * `ZFGitCmdComplete_branch`
     * `ZFGitCmdComplete_branch_remote`
     * `ZFGitCmdComplete_branch_local`
+    * `ZFGitCmdComplete_changedPath`
 

@@ -28,7 +28,7 @@ function! ZFGitCleanInfo()
     let ignored = {}
 
     " https://git-scm.com/docs/git-status#_short_format
-    for item in split(s:runGitCmd('status -s --ignored'), "\n")
+    for item in split(ZFGitCmd('git -c "core.quotepath=false" status -s --ignored'), "\n")
         if strlen(item) <= 4
             continue
         endif
@@ -88,10 +88,6 @@ function! ZFGitCleanRun(cleanInfo, ...)
 endfunction
 
 " ============================================================
-function! s:runGitCmd(cmd)
-    return ZFGitCmd('git -c "core.quotepath=false" ' . a:cmd)
-endfunction
-
 function! s:prepareLines(cleanInfo)
     let lines = []
 
