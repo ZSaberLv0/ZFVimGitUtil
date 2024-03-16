@@ -5,11 +5,12 @@ command! -nargs=0 ZFGitTmpStashList :call ZFGitTmpStashList()
 command! -nargs=0 ZFGitTmpStashPop :call ZFGitTmpStashPop()
 
 " ============================================================
-function! ZFGitTmpStash(file)
-    if a:file == '*' || empty(a:file)
+function! ZFGitTmpStash(...)
+    let fileOrEmpty = get(a:, 1, '')
+    if fileOrEmpty == '*' || empty(fileOrEmpty)
         let statuses = ZFGitCmd(printf('git -c "core.quotepath=false" status -s'))
     else
-        let statuses = ZFGitCmd(printf('git -c "core.quotepath=false" status -s "%s"', a:file))
+        let statuses = ZFGitCmd(printf('git -c "core.quotepath=false" status -s "%s"', fileOrEmpty))
     endif
     if empty(statuses) || v:shell_error != '0'
         echo 'no changes'
@@ -200,12 +201,35 @@ function! ZFGitTmpStashList()
     return ret
 endfunction
 
-function! ZFGitTmpStashPop()
+" option: {
+"   'confirm' : 1/0,
+" }
+function! ZFGitTmpStashPop(...)
+    let option = get(a:, 1, {})
     silent! let status = ZFGitTmpStashList()
     if empty(status)
         echo 'no stashes'
         return
     endif
+
+    if get(option, 'confirm', 1)
+        echo 'stashes to apply:'
+        for item in status['del']
+            echo '  D ' . item
+        endfor
+        for item in status['mod']
+            echo '    ' . item
+        endfor
+        echo "\n"
+        echo 'confirm to apply stashes? [y/n]: '
+        let input = getchar()
+        redraw
+        if input != char2nr('y') && input != char2nr('y')
+            echo 'canceled'
+            return
+        endif
+    endif
+
     echo 'stashes applied:'
     for item in status['del']
         call s:rm(item)
