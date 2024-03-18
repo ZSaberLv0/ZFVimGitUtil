@@ -68,7 +68,7 @@ function! ZFGitRemoveBranch(name, ...)
             return
         endif
     endif
-    let hint .= "\n[ZFGitRemoveBranch] about to remove ' . targetHint . ' branch:"
+    let hint .= "\n[ZFGitRemoveBranch] about to remove " . targetHint . " branch:"
     let hint .= "\n    " . a:name
     let hint .= "\n"
     let hint .= "\nWARNING: can not undo"

@@ -212,6 +212,7 @@ function! ZFGitTmpStashPop(...)
         return
     endif
 
+    let clean = 1
     if get(option, 'confirm', 1)
         echo 'stashes to apply:'
         for item in status['del']
@@ -221,12 +222,15 @@ function! ZFGitTmpStashPop(...)
             echo '    ' . item
         endfor
         echo "\n"
-        echo 'confirm to apply stashes? [y/n]: '
+        echo 'confirm to apply stashes? [y/Y/n]: '
         let input = getchar()
         redraw
-        if input != char2nr('y') && input != char2nr('y')
+        if input != char2nr('y') && input != char2nr('Y')
             echo 'canceled'
             return
+        endif
+        if input == char2nr('Y')
+            let clean = 0
         endif
     endif
 
@@ -239,7 +243,9 @@ function! ZFGitTmpStashPop(...)
         call s:cp(printf('%s/%s', s:basePath, item), item)
         echo '    ' . item
     endfor
-    call s:rm(s:basePath)
+    if clean
+        call s:rm(s:basePath)
+    endif
 endfunction
 
 let s:basePath = '.git/ZFGitTmpStash'
