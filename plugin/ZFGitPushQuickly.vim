@@ -155,8 +155,8 @@ function! ZFGitPushQuickly(...)
 
     call ZFGitCmd('git stash pop')
     let stashResult = ZFGitCmd('git status -s')
-    silent let conflictFiles = ZFGitOpenConflictFiles(split(stashResult, "\n"))
-    if conflictFiles > 0
+    silent let conflictFiles = ZFGitConflictOpen(split(stashResult, "\n"))
+    if !empty(conflictFiles)
         redraw
         let msg = 'CONFLICTS:'
         for conflictFile in conflictFiles
