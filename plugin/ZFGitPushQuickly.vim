@@ -155,19 +155,8 @@ function! ZFGitPushQuickly(...)
 
     call ZFGitCmd('git stash pop')
     let stashResult = ZFGitCmd('git status -s')
-    let conflictFiles = []
-    if s:openConflictFiles(split(stashResult, "\n"), conflictFiles) > 0
-        " <<<<<<< Updated upstream
-        " content A
-        " =======
-        " content B
-        " >>>>>>> Stashed changes
-        "
-        " ^<<<<<<<+ .*$|^=======+$|^>>>>>>>+ .*$
-        let @/ = '^<<<<<<<\+ .*$\|^=======\+$\|^>>>>>>>\+ .*$'
-        call histadd('/', @/)
-        normal! ggnzz
-
+    silent let conflictFiles = ZFGitOpenConflictFiles(split(stashResult, "\n"))
+    if conflictFiles > 0
         redraw
         let msg = 'CONFLICTS:'
         for conflictFile in conflictFiles
@@ -237,46 +226,5 @@ function! ZF_GitMsgMatch(text, patterns)
         endif
     endfor
     return -1
-endfunction
-
-function! s:openConflictFiles(stashResult, conflictFiles)
-    let ret = 0
-    " https://git-scm.com/docs/git-status#_short_format
-    "
-    " XY PATH
-    " XY ORIG_PATH -> PATH
-    for line in a:stashResult
-        " ^[ \t]*(U.|.U)[ \t]+
-        if match(line, '^[ \t]*\(U.\|.U\)[ \t]\+') < 0
-            continue
-        endif
-        let file = substitute(line, '^[ \t]*\(U.\|.U\)[ \t]\+', '', '')
-
-        " [ \t]+->[ \t]+
-        if match(file, '[ \t]\+->[ \t]\+') >= 0
-            let ret += s:openConflictFile(substitute(file, '[ \t]\+->[ \t]\+.*', '', ''), a:conflictFiles)
-            let ret += s:openConflictFile(substitute(file, '.*[ \t]\+->[ \t]\+', '', ''), a:conflictFiles)
-        else
-            let ret += s:openConflictFile(file, a:conflictFiles)
-        endif
-    endfor
-    return ret
-endfunction
-
-function! s:openConflictFile(file, conflictFiles)
-    let file = a:file
-
-    " ^[ \t]*"
-    let file = substitute(file, '^[ \t]*"', '', '')
-    " "[ \t]*$
-    let file = substitute(file, '"[ \t]*$', '', '')
-
-    if !empty(file) && filereadable(file)
-        call add(a:conflictFiles, file)
-        execute 'edit ' . substitute(file, ' ', '\\ ', 'g')
-        return 1
-    else
-        return 0
-    endif
 endfunction
 

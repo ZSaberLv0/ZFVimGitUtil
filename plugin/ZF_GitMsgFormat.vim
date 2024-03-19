@@ -12,3 +12,14 @@ function! ZF_GitMsgFormat_containLocalCommits()
                 \ ]
 endfunction
 
+function! ZF_GitMsgFormat_conflictPattern()
+    " <<<<<<< Updated upstream
+    " content A
+    " =======
+    " content B
+    " >>>>>>> Stashed changes
+    "
+    " ^<<<<<<<+ .*$|^=======+$|^>>>>>>>+ .*$
+    return '^<<<<<<<\+ .*$\|^=======\+$\|^>>>>>>>\+ .*$'
+endfunction
+

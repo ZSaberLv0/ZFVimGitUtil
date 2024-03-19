@@ -28,7 +28,7 @@ function! ZFGitCleanInfo()
     let ignored = {}
 
     " https://git-scm.com/docs/git-status#_short_format
-    for item in split(ZFGitCmd('git -c "core.quotepath=false" status -s --ignored'), "\n")
+    for item in split(ZFGitCmd('git status -s --ignored'), "\n")
         if strlen(item) <= 4
             continue
         endif

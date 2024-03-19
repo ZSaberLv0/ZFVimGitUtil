@@ -8,9 +8,9 @@ command! -nargs=0 ZFGitTmpStashPop :call ZFGitTmpStashPop()
 function! ZFGitTmpStash(...)
     let fileOrEmpty = get(a:, 1, '')
     if fileOrEmpty == '*' || empty(fileOrEmpty)
-        let statuses = ZFGitCmd(printf('git -c "core.quotepath=false" status -s'))
+        let statuses = ZFGitCmd(printf('git status -s'))
     else
-        let statuses = ZFGitCmd(printf('git -c "core.quotepath=false" status -s "%s"', fileOrEmpty))
+        let statuses = ZFGitCmd(printf('git status -s "%s"', fileOrEmpty))
     endif
     if empty(statuses) || v:shell_error != '0'
         echo 'no changes'

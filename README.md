@@ -75,6 +75,10 @@ Plugin 'ZSaberLv0/ZFVimGitUtil'
     find and go through all git repo under cwd,
     echo its changes by `git status -s`
 
+* `:ZFGitConflictOpen` / `:ZFGitConflictResolve`
+
+    util to open or resolve conflict files
+
 * `:ZFGitMirror`
 
     config git mirror quickly
@@ -208,6 +212,7 @@ Plugin 'ZSaberLv0/ZFVimGitUtil'
     * `ZFGitGetAllLocalBranch()`
     * `ZFGitGetAllRemoteBranch()`
     * `ZFGitGetAllBranch()`
+    * `ZFGitGetAllConflictFiles()`
 
 * command line complete
 

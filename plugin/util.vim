@@ -425,6 +425,52 @@ function! ZFGitCmd(cmd)
 endfunction
 
 " ============================================================
+function! ZFGitGetAllConflictFiles(...)
+    let param = get(a:, 1, {})
+    if type(param) == type('')
+        let gitShortStatusList = split(param, "\n")
+    elseif type(param) == type([])
+        let gitShortStatusList = param
+    else
+        let gitShortStatusList = split(ZFGitCmd('git status -s'), "\n")
+    endif
+
+    let conflictFiles = []
+    " https://git-scm.com/docs/git-status#_short_format
+    "
+    " XY PATH
+    " XY ORIG_PATH -> PATH
+    for line in gitShortStatusList
+        " ^[ \t]*(U.|.U)[ \t]+
+        if match(line, '^[ \t]*\(U.\|.U\)[ \t]\+') < 0
+            continue
+        endif
+        let file = substitute(line, '^[ \t]*\(U.\|.U\)[ \t]\+', '', '')
+
+        " [ \t]+->[ \t]+
+        if match(file, '[ \t]\+->[ \t]\+') >= 0
+            call s:checkConflict(substitute(file, '[ \t]\+->[ \t]\+.*', '', ''), a:conflictFiles)
+            call s:checkConflict(substitute(file, '.*[ \t]\+->[ \t]\+', '', ''), a:conflictFiles)
+        else
+            call s:checkConflict(file, a:conflictFiles)
+        endif
+    endfor
+    return conflictFiles
+endfunction
+function! s:checkConflict(file, conflictFiles)
+    let file = a:file
+
+    " ^[ \t]*"
+    let file = substitute(file, '^[ \t]*"', '', '')
+    " "[ \t]*$
+    let file = substitute(file, '"[ \t]*$', '', '')
+
+    if !empty(file) && filereadable(file)
+        call add(a:conflictFiles, file)
+    endif
+endfunction
+
+" ============================================================
 " ArgLead: aa/b
 " line: aa/bb/cc
 " to: aa/bb, instead: aa/bb/cc
@@ -478,7 +524,7 @@ function! ZFGitCmdComplete_branch_local(ArgLead, CmdLine, CursorPos)
 endfunction
 
 function! ZFGitCmdComplete_changedPath(ArgLead, CmdLine, CursorPos)
-    let statuses = ZFGitCmd('git -c "core.quotepath=false" status -s')
+    let statuses = ZFGitCmd('git status -s')
     if empty(statuses) || v:shell_error != '0'
         return []
     endif

@@ -1,5 +1,5 @@
 
-command! -nargs=? -bang -complete=customlist,ZFGitCmdComplete_branch ZFGitCheckout :call ZFGitCheckout(<q-args>, {'force' : <q-bang> == '!'})
+command! -nargs=? -bang -complete=customlist,ZFGitCmdComplete_branch ZFGitCheckout :call ZFGitCheckout(<q-args>, {'force' : (<q-bang> == '!')})
 
 " option: {
 "   'force' : 0/1, // whether try to perform `git reset --hard origin/<branch>`
