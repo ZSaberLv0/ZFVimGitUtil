@@ -70,6 +70,7 @@ function! ZFGitMergeToAndPush(toBranch, ...)
 
     redraw
 
+    let mergeSuccess = 1
     call ZFGitCmd(printf('git checkout "%s"', a:toBranch))
     if v:shell_error == 0
         echo 'fetching branch: ' . a:toBranch
@@ -89,9 +90,7 @@ function! ZFGitMergeToAndPush(toBranch, ...)
                 let exitCode = v:shell_error
                 let output = mergeResult
                 echo output
-                echo "\n"
-                echo printf('merge failed, reset branch "%s" to origin', a:toBranch)
-                call ZFGitCmd(printf('git reset --hard "origin/%s"', a:toBranch))
+                let mergeSuccess = 0
             else
                 redraw
                 echo 'pushing to ' . a:toBranch . '... ' . gitInfo['git_remoteurl']
@@ -128,12 +127,14 @@ function! ZFGitMergeToAndPush(toBranch, ...)
         endif
     endif
 
-    let restoreResult = ZFGitCmd(printf('git checkout "%s"', curBranch))
-    if v:shell_error != 0
-        echo restoreResult
-        if exitCode == '0'
-            let exitCode = v:shell_error
-            let output = 'branch restore failed: ' . restoreResult
+    if mergeSuccess
+        let restoreResult = ZFGitCmd(printf('git checkout "%s"', curBranch))
+        if v:shell_error != 0
+            echo restoreResult
+            if exitCode == '0'
+                let exitCode = v:shell_error
+                let output = 'branch restore failed: ' . restoreResult
+            endif
         endif
     endif
 

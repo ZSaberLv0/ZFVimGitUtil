@@ -1,7 +1,16 @@
 
-command! -nargs=? -complete=customlist,ZFGitCmdComplete_branch ZFGitCheckout :call ZFGitCheckout(<q-args>)
+command! -nargs=? -bang -complete=customlist,ZFGitCmdComplete_branch ZFGitCheckout :call ZFGitCheckout(<q-args>, {'force' : <q-bang> == '!'})
 
-function! ZFGitCheckout(branch)
+" option: {
+"   'force' : 0/1, // whether try to perform `git reset --hard origin/<branch>`
+"                  // valid only if remote branch exists
+" }
+"
+" return: branch name if success, or empty if fail
+function! ZFGitCheckout(branch, ...)
+    let option = get(a:, 1, {})
+    let force = get(option, 'force', 0)
+
     if !empty(a:branch) && stridx(a:branch, '*') < 0
         let allBranch = ZFGitGetAllBranch()
         if index(allBranch, a:branch) >= 0
@@ -9,19 +18,23 @@ function! ZFGitCheckout(branch)
                     \ || isdirectory(a:branch)
                     \ || !empty(split(ZFGitCmd(printf('git status -s "%s"', a:branch)), "\n"))
             echo ZFGitCmd(printf('git checkout "%s"', a:branch))
-            return
+            if v:shell_error == 0 && index(ZFGitGetAllRemoteBranch(), a:branch) >= 0
+                echo ZFGitCmd(printf('git reset --hard "origin/%s"', a:branch))
+            endif
+            return (v:shell_error == 0 ? a:branch : '')
         endif
-        echo 'branch not exist: ' . a:branch
+        echo 'branch not exist:'
+        echo '    ' . a:branch
         echo "\n"
         echo 'create and switch to new branch? [y/n]: '
         let choice = nr2char(getchar())
         redraw
         if choice != 'y' && choice != 'Y'
             echo 'checkout canceled: ' . a:branch
-            return
+            return ''
         endif
         echo ZFGitCmd(printf('git checkout -b "%s"', a:branch))
-        return
+        return (v:shell_error == 0 ? a:branch : '')
     endif
 
     let pattern = substitute(a:branch, '\.', '\\\.', 'g')
@@ -59,9 +72,14 @@ function! ZFGitCheckout(branch)
     endif
     if empty(target)
         echo 'canceled'
-    else
-        echo ZFGitCmd(printf('git checkout "%s"', target))
+        return ''
     endif
+
+    echo ZFGitCmd(printf('git checkout "%s"', target))
+    if v:shell_error == 0 && index(ZFGitGetAllRemoteBranch(), target) >= 0
+        echo ZFGitCmd(printf('git reset --hard "origin/%s"', target))
+    endif
+    return (v:shell_error == 0 ? target : '')
 endfunction
 
 function! s:choice_default(curBranch, localBranch, remoteBranch)
