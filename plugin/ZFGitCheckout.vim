@@ -3,7 +3,24 @@ command! -nargs=? -complete=customlist,ZFGitCmdComplete_branch ZFGitCheckout :ca
 
 function! ZFGitCheckout(branch)
     if !empty(a:branch) && stridx(a:branch, '*') < 0
-        echo ZFGitCmd(printf('git checkout "%s"', a:branch))
+        let allBranch = ZFGitGetAllBranch()
+        if index(allBranch, a:branch) >= 0
+                    \ || filereadable(a:branch)
+                    \ || isdirectory(a:branch)
+                    \ || !empty(split(ZFGitCmd(printf('git status -s "%s"', a:branch)), "\n"))
+            echo ZFGitCmd(printf('git checkout "%s"', a:branch))
+            return
+        endif
+        echo 'branch not exist: ' . a:branch
+        echo "\n"
+        echo 'create and switch to new branch? [y/n]: '
+        let choice = nr2char(getchar())
+        redraw
+        if choice != 'y' && choice != 'Y'
+            echo 'checkout canceled: ' . a:branch
+            return
+        endif
+        echo ZFGitCmd(printf('git checkout -b "%s"', a:branch))
         return
     endif
 
