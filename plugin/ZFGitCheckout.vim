@@ -49,8 +49,9 @@ function! ZFGitCheckout(branch, ...)
         endif
         let i -= 1
     endwhile
+    call reverse(localBranch)
     let curBranchIndex = index(localBranch, curBranch)
-    if curBranchIndex > 0 && curBranchIndex < len(curBranch) - 1
+    if curBranchIndex > 0 && curBranchIndex < len(localBranch)
         call remove(localBranch, curBranchIndex)
         call insert(localBranch, curBranch, 0)
     endif
@@ -64,6 +65,7 @@ function! ZFGitCheckout(branch, ...)
         endif
         let i -= 1
     endwhile
+    call reverse(remoteBranch)
 
     if exists('*ZF_VimCmdMenuShow')
         let target = s:choice_ZFVimCmdMenu(curBranch, localBranch, remoteBranch)
