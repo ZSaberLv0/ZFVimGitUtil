@@ -449,10 +449,10 @@ function! ZFGitGetAllConflictFiles(...)
 
         " [ \t]+->[ \t]+
         if match(file, '[ \t]\+->[ \t]\+') >= 0
-            call s:checkConflict(substitute(file, '[ \t]\+->[ \t]\+.*', '', ''), a:conflictFiles)
-            call s:checkConflict(substitute(file, '.*[ \t]\+->[ \t]\+', '', ''), a:conflictFiles)
+            call s:checkConflict(substitute(file, '[ \t]\+->[ \t]\+.*', '', ''), conflictFiles)
+            call s:checkConflict(substitute(file, '.*[ \t]\+->[ \t]\+', '', ''), conflictFiles)
         else
-            call s:checkConflict(file, a:conflictFiles)
+            call s:checkConflict(file, conflictFiles)
         endif
     endfor
     return conflictFiles
