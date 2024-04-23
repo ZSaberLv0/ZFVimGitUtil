@@ -8,7 +8,7 @@
 "   'local' : 1/0,
 "   'remote' : 1/0,
 " }
-function! ZFGitRemoveBranch(name, ...)
+function! ZFGitRemoveBranch(toRemove, ...)
     let option = get(a:, 1, {})
 
     let url = ZFGitGetRemoteUrl()
@@ -18,6 +18,30 @@ function! ZFGitRemoveBranch(name, ...)
     endif
     if ZFGitCheckSsh(url)
         return
+    endif
+
+    let targetInfo = ZFGitBranchPick(a:toRemove)
+    if empty(targetInfo['branch'])
+        return {
+                    \   'exitCode' : 'ZF_CANCELED',
+                    \   'output' : 'canceled',
+                    \ }
+    endif
+    let toRemove = targetInfo['branch']
+
+    if get(option, 'local', 1)
+        let curBranch = ZFGitGetCurBranch()
+        if curBranch == toRemove
+            redraw
+            echo 'can not remove current branch:'
+            echo '    ' . toRemove
+            return
+        elseif curBranch == 'HEAD'
+            redraw
+            echo 'can not work on detached HEAD'
+            echo '    ' . toRemove
+            return
+        endif
     endif
 
     let gitInfo = ZFGitPrepare({
@@ -36,21 +60,6 @@ function! ZFGitRemoveBranch(name, ...)
         let remoteUrl = url
     endif
 
-    if get(option, 'local', 1)
-        let curBranch = ZFGitGetCurBranch()
-        if curBranch == a:name
-            redraw
-            echo 'can not remove current branch:'
-            echo '    ' . a:name
-            return
-        elseif curBranch == 'HEAD'
-            redraw
-            echo 'can not work on detached HEAD'
-            echo '    ' . a:name
-            return
-        endif
-    endif
-
     let hint = 'REPO: ' . gitInfo.git_remoteurl
     if get(option, 'local', 1)
         if get(option, 'remote', 1)
@@ -64,12 +73,12 @@ function! ZFGitRemoveBranch(name, ...)
         else
             redraw
             echo 'no target to remove'
-            echo '    ' . a:name
+            echo '    ' . toRemove
             return
         endif
     endif
     let hint .= "\n[ZFGitRemoveBranch] about to remove " . targetHint . " branch:"
-    let hint .= "\n    " . a:name
+    let hint .= "\n    " . toRemove
     let hint .= "\n"
     let hint .= "\nWARNING: can not undo"
     let hint .= "\nenter `got it` to continue: "
@@ -90,14 +99,14 @@ function! ZFGitRemoveBranch(name, ...)
 
     if get(option, 'local', 1)
         redraw
-        echo 'removing local branch "' . a:name . '" ... '
-        let removeLocalResult = ZFGitCmd(printf('git branch -D "%s"', a:name))
+        echo 'removing local branch "' . toRemove . '" ... '
+        let removeLocalResult = ZFGitCmd(printf('git branch -D "%s"', toRemove))
     endif
 
     if get(option, 'remote', 1)
         redraw
-        echo 'removing remote branch "' . a:name . '" ... '
-        let pushResult = ZFGitCmd(printf('git push "%s" --delete "%s"', remoteUrl, a:name))
+        echo 'removing remote branch "' . toRemove . '" ... '
+        let pushResult = ZFGitCmd(printf('git push "%s" --delete "%s"', remoteUrl, toRemove))
         let pushResult = substitute(pushResult, ':[^:]*@', '@', 'g')
         call ZFGitCmd(printf('git fetch -p -P "%s" "+refs/heads/*:refs/remotes/origin/*"', remoteUrl))
     endif
@@ -113,5 +122,5 @@ function! ZFGitRemoveBranch(name, ...)
     endif
     echo pushResult
 endfunction
-command! -nargs=+ -bang -complete=customlist,ZFGitCmdComplete_branch ZFGitRemoveBranch :call ZFGitRemoveBranch(<q-args>, {'local' : (<q-bang> == '!' ? 0 : 1)})
+command! -nargs=* -bang -complete=customlist,ZFGitCmdComplete_branch ZFGitRemoveBranch :call ZFGitRemoveBranch(<q-args>, {'local' : (<q-bang> == '!' ? 0 : 1)})
 
