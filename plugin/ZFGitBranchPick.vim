@@ -92,7 +92,9 @@ function! s:choice_default(curBranch, localBranch, remoteBranch)
     for i in range(len(a:localBranch))
         call add(hint, printf('  %s%2s: %s', (a:localBranch[i] == a:curBranch ? '=>' : '  '), localOffset + i, a:localBranch[i]))
     endfor
-    call add(hint, '')
+    if !empty(a:localBranch)
+        call add(hint, '')
+    endif
     if !empty(a:remoteBranch)
         for i in range(len(a:remoteBranch))
             call add(hint, printf('    %2s: %s', remoteOffset + i, a:remoteBranch[i]))
@@ -123,10 +125,12 @@ function! s:choice_ZFVimCmdMenu(curBranch, localBranch, remoteBranch)
                     \ })
     endfor
     if !empty(a:remoteBranch)
-        call ZF_VimCmdMenuAdd({
-                    \   'text' : '',
-                    \   'itemType' : 'hint',
-                    \ })
+        if !empty(a:localBranch)
+            call ZF_VimCmdMenuAdd({
+                        \   'text' : '',
+                        \   'itemType' : 'hint',
+                        \ })
+        endif
         for branch in a:remoteBranch
             call ZF_VimCmdMenuAdd({
                         \   'showKeyHint' : 1,
