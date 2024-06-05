@@ -96,6 +96,9 @@ function! s:prepareLines(cleanInfo)
                 \   '# `q` to perform or cancel cleanup',
                 \   '# remove or comment lines to prevent file from being cleanup',
                 \   '',
+                \   '# uncomment `<cleanAllSubmodule>` to clean all submodule',
+                \   '# <cleanAllSubmodule>',
+                \   '',
                 \ ])
 
     if !empty(a:cleanInfo['modified'])
@@ -151,6 +154,7 @@ function! s:setupBuffer(cleanInfo, lines)
     setlocal foldlevel=128
     let b:ZFGitCleanInfo = a:cleanInfo
     nnoremap <buffer><silent> q :call ZF_GitClean_action()<cr>
+    normal! gg8j
 endfunction
 
 function! ZF_GitClean_action()
@@ -207,13 +211,13 @@ endfunction
 function! s:cleanFileOrDir(cleanInfo, fileOrDir, autoBackup)
     if 0
     elseif exists("a:cleanInfo['modified'][a:fileOrDir]") || exists("a:cleanInfo['deleted'][a:fileOrDir]")
-        if a:autoBackup
+        if a:autoBackup && !isdirectory(a:fileOrDir)
             call s:tryBackup(a:fileOrDir)
         endif
         call ZFGitCmd(printf('git reset HEAD "%s"', a:fileOrDir))
         call ZFGitCmd(printf('git checkout "%s"', a:fileOrDir))
     elseif exists("a:cleanInfo['untracked'][a:fileOrDir]") || exists("a:cleanInfo['ignored'][a:fileOrDir]")
-        if a:autoBackup
+        if a:autoBackup && !exists("a:cleanInfo['ignored'][a:fileOrDir]")
             call s:tryBackup(a:fileOrDir)
         endif
         if exists("a:cleanInfo['untracked'][a:fileOrDir]")
@@ -225,8 +229,12 @@ function! s:cleanFileOrDir(cleanInfo, fileOrDir, autoBackup)
         else
             call ZFGitCmd(printf('rm -rf "%s"', a:fileOrDir))
         endif
+    elseif a:fileOrDir == s:cleanAllSubmodule
+        call ZFGitCmd('git submodule foreach --recursive git reset --hard')
     endif
 endfunction
+
+let s:cleanAllSubmodule = '<cleanAllSubmodule>'
 
 function! s:tryBackup(fileOrDir)
     if !exists('*ZFBackupSave')
