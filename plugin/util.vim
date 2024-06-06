@@ -271,7 +271,7 @@ function! ZFGitGetAllBranch()
 endfunction
 
 function! ZFGitGetCurCommit()
-    let ret = system('git log -1 --format=format:"%H"')
+    let ret = ZFGitCmd('git log -1 --format=format:"%H"')
     if v:shell_error == 0 && !empty(ret)
         return substitute(ret, '[\r\n]', '', 'g')
     else
