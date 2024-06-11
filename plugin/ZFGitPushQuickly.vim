@@ -110,9 +110,10 @@ function! ZFGitPushQuickly(...)
         call ZFGitCmd(config)
     endfor
 
+    let branch = ZFGitGetCurBranch()
     call ZFGitCmd('git add -A')
     let stashResult = ZFGitCmd('git stash')
-    if v:shell_error != 0
+    if v:shell_error != 0 && !empty(branch)
         redraw
         echo 'unable to stash: ' . stashResult
         return {
@@ -120,7 +121,6 @@ function! ZFGitPushQuickly(...)
                     \   'output' : 'unable to stash: ' . stashResult,
                     \ }
     endif
-    let branch = ZFGitGetCurBranch()
     if branch == 'HEAD'
         redraw
         echo 'unable to parse git branch, maybe in detached HEAD?'
