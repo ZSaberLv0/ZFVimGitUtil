@@ -24,10 +24,11 @@ function! ZFGitMirror(option)
     " url.https://xxx.com/.insteadof https://
     " url\."?(.*?)"?\.insteadof (.*)
     let mirrorState = ZFGitCmd(printf('git config %s --get-regexp "url.*insteadOf"', globalFix))
+    let mirrorState = substitute(mirrorState, '[\r\n]', '', 'g')
     let mirrorFromOld = substitute(
                 \ mirrorState,
                 \ 'url\."\=\(.\{-}\)"\=\.insteadof \(.*\)',
-                \ '\1',
+                \ '\2',
                 \ '')
     if mirrorFromOld == mirrorState
         let mirrorFromOld = ''
