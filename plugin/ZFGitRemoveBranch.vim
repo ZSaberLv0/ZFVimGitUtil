@@ -108,7 +108,7 @@ function! ZFGitRemoveBranch(toRemove, ...)
         echo 'removing remote branch "' . toRemove . '" ... '
         let pushResult = ZFGitCmd(printf('git push "%s" --delete "%s"', remoteUrl, toRemove))
         let pushResult = substitute(pushResult, ':[^:]*@', '@', 'g')
-        call ZFGitCmd(printf('git fetch -p -P "%s" "+refs/heads/*:refs/remotes/origin/*"', remoteUrl))
+        call ZFGitCmd(printf('git fetch -p "%s" "+refs/heads/*:refs/remotes/origin/*"', remoteUrl))
     endif
 
     redraw

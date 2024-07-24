@@ -43,7 +43,7 @@ function! ZFGitFetch(...)
     endfor
 
     let fetchResult = ZFGitCmd(printf('git fetch %s "%s" "+refs/heads/*:refs/remotes/origin/*"'
-                \ , prune ? '-p -P' : ''
+                \ , prune ? '-p' : ''
                 \ , remoteUrl
                 \ ))
     let exitCode = '' . v:shell_error
