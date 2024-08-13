@@ -9,7 +9,9 @@ command! -nargs=? -complete=customlist,ZFGitCmdComplete_branch ZFGitCheckout :ca
 " return: branch name if success, or empty if fail
 function! ZFGitCheckout(branch)
     if !empty(a:branch) && stridx(a:branch, '*') < 0
-        let targetInfo = ZFGitBranchPick(a:branch)
+        let targetInfo = ZFGitBranchPick(a:branch, {
+                    \   'title' : 'choose branch to checkout:',
+                    \ })
         if targetInfo['exist']
                     \ || filereadable(a:branch)
                     \ || isdirectory(a:branch)
@@ -31,7 +33,9 @@ function! ZFGitCheckout(branch)
         return (v:shell_error == 0 ? a:branch : '')
     endif
 
-    let targetInfo = ZFGitBranchPick(a:branch)
+    let targetInfo = ZFGitBranchPick(a:branch, {
+                \   'title' : 'choose branch to checkout:',
+                \ })
     if empty(targetInfo['branch'])
         echo 'canceled'
         return ''

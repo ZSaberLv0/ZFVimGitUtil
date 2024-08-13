@@ -5,6 +5,7 @@
 " * empty string (to pick from all branches)
 "
 " option: {
+"   'title' : 'choose target branch:',
 "   'local' : 1/0,
 "   'remote' : 1/0,
 " }
@@ -15,6 +16,7 @@
 " }
 function! ZFGitBranchPick(branch, ...)
     let option = get(a:, 1, {})
+    let title = get(option, 'title', 'choose target branch:')
     let checkLocal = get(option, 'local', 1)
     let checkRemote = get(option, 'remote', 1)
 
@@ -72,9 +74,9 @@ function! ZFGitBranchPick(branch, ...)
     call reverse(remoteBranch)
 
     if exists('*ZF_VimCmdMenuShow')
-        let target = s:choice_ZFVimCmdMenu(curBranch, localBranch, remoteBranch)
+        let target = s:choice_ZFVimCmdMenu(title, curBranch, localBranch, remoteBranch)
     else
-        let target = s:choice_default(curBranch, localBranch, remoteBranch)
+        let target = s:choice_default(title, curBranch, localBranch, remoteBranch)
     endif
     return {
                 \   'exist' : !empty(target),
@@ -82,12 +84,12 @@ function! ZFGitBranchPick(branch, ...)
                 \ }
 endfunction
 
-function! s:choice_default(curBranch, localBranch, remoteBranch)
+function! s:choice_default(title, curBranch, localBranch, remoteBranch)
     let localOffset = 1
     let remoteOffset = localOffset + len(a:localBranch)
 
     let hint = []
-    call add(hint, 'choose branch to checkout:')
+    call add(hint, a:title)
     call add(hint, '')
     for i in range(len(a:localBranch))
         call add(hint, printf('  %s%2s: %s', (a:localBranch[i] == a:curBranch ? '=>' : '  '), localOffset + i, a:localBranch[i]))
@@ -113,7 +115,7 @@ function! s:choice_default(curBranch, localBranch, remoteBranch)
     endif
 endfunction
 
-function! s:choice_ZFVimCmdMenu(curBranch, localBranch, remoteBranch)
+function! s:choice_ZFVimCmdMenu(title, curBranch, localBranch, remoteBranch)
     let localOffset = 0
     let remoteOffset = len(a:localBranch) + 1
 
@@ -121,7 +123,7 @@ function! s:choice_ZFVimCmdMenu(curBranch, localBranch, remoteBranch)
         call ZF_VimCmdMenuAdd({
                     \   'showKeyHint' : 1,
                     \   'text' : printf('%s %s', (branch == a:curBranch ? '=>' : '  '), branch),
-                    \   'ZFGitCheckout_branch' : branch,
+                    \   'ZFGitBranchPick_branch' : branch,
                     \ })
     endfor
     if !empty(a:remoteBranch)
@@ -135,15 +137,15 @@ function! s:choice_ZFVimCmdMenu(curBranch, localBranch, remoteBranch)
             call ZF_VimCmdMenuAdd({
                         \   'showKeyHint' : 1,
                         \   'text' : printf('   %s', branch),
-                        \   'ZFGitCheckout_branch' : branch,
+                        \   'ZFGitBranchPick_branch' : branch,
                         \ })
         endfor
     endif
 
     let choice = ZF_VimCmdMenuShow({
-                \   'headerText' : 'choose branch to checkout:',
+                \   'headerText' : a:title,
                 \ })
     redraw
-    return get(choice, 'ZFGitCheckout_branch', '')
+    return get(choice, 'ZFGitBranchPick_branch', '')
 endfunction
 

@@ -44,7 +44,9 @@ function! ZFGitMergeToAndPush(toBranch, ...)
                     \ }
     endif
 
-    let targetInfo = ZFGitBranchPick(a:toBranch)
+    let targetInfo = ZFGitBranchPick(a:toBranch, {
+                \   'title' : 'choose branch to merge to:',
+                \ })
     if empty(targetInfo['branch'])
         return {
                     \   'exitCode' : 'ZF_CANCELED',

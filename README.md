@@ -11,6 +11,7 @@ use [Vundle](https://github.com/VundleVim/Vundle.vim) or any other plugin manage
 
 ```
 Plugin 'ZSaberLv0/ZFVimGitUtil'
+Plugin 'tpope/vim-fugitive' " optional, for :ZFGitRebase only
 ```
 
 
@@ -69,6 +70,10 @@ Plugin 'ZSaberLv0/ZFVimGitUtil'
 * `:ZFGitRemoveBranch`
 
     remove branch from remote and local quickly
+
+* `:ZFGitRebase`
+
+    perform 'git rebase -i' inside vim, require `tpope/vim-fugitive`
 
 * `:ZFGitStatus`
 

@@ -20,7 +20,9 @@ function! ZFGitRemoveBranch(toRemove, ...)
         return
     endif
 
-    let targetInfo = ZFGitBranchPick(a:toRemove)
+    let targetInfo = ZFGitBranchPick(a:toRemove, {
+                \   'title' : 'choose branch to remove:',
+                \ })
     if empty(targetInfo['branch'])
         return {
                     \   'exitCode' : 'ZF_CANCELED',
