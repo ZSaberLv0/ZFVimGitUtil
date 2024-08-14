@@ -231,6 +231,14 @@ function! s:cleanFileOrDir(cleanInfo, fileOrDir, autoBackup)
         endif
     elseif a:fileOrDir == s:cleanAllSubmodule
         call ZFGitCmd('git submodule foreach --recursive git reset --hard')
+        for git in split(glob('**/.git', 1), "\n")
+            " [\/\\]*\.git
+            let path = substitute(git, '[\/\\]*\.git', '', '')
+            if empty(path) || !isdirectory(path)
+                continue
+            endif
+            call ZFGitCmd(printf('cd "%s" && git submodule foreach --recursive git reset --hard', path))
+        endfor
     endif
 endfunction
 
