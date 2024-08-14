@@ -1,12 +1,19 @@
 
-command! -nargs=* -complete=customlist,ZFGitCmdComplete_changedPath ZFGitTmpStash :call ZFGitTmpStash(<q-args>)
+command! -bang -nargs=* -complete=customlist,ZFGitCmdComplete_changedPath ZFGitTmpStash :call ZFGitTmpStash(<q-args>, {'clean' : <q-bang>=='!'?0:1})
 command! -nargs=* -complete=customlist,ZFGitCmdComplete_stashDrop ZFGitTmpStashDrop :call ZFGitTmpStashDrop(<q-args>)
 command! -nargs=0 ZFGitTmpStashList :call ZFGitTmpStashList()
 command! -nargs=0 ZFGitTmpStashPop :call ZFGitTmpStashPop()
 
 " ============================================================
+" param0: fileOrEmpty
+" param1: option: {
+"   'clean' : '1/0, whether clean after stash',
+" }
 function! ZFGitTmpStash(...)
     let fileOrEmpty = get(a:, 1, '')
+    let option = get(a:, 2, {})
+    let clean = get(option, 'clean', 1)
+
     if fileOrEmpty == '*' || empty(fileOrEmpty)
         let statuses = ZFGitCmd(printf('git status -s'))
     else
@@ -40,14 +47,18 @@ function! ZFGitTmpStash(...)
                 call mkdir(p, 'p')
             endif
             call writefile([], printf('%s/%s%s', s:basePath, s:delToken, file))
-            call s:reset(file)
+            if clean
+                call s:reset(file)
+            endif
             call add(hint, '  D ' . file)
         else
             call s:cp(file, printf('%s/%s', s:basePath, file))
-            if X == '?'
-                call s:rm(file)
-            else
-                call s:reset(file)
+            if clean
+                if X == '?'
+                    call s:rm(file)
+                else
+                    call s:reset(file)
+                endif
             endif
             call add(hint, '    ' . file)
         endif
