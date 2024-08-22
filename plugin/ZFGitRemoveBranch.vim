@@ -3,13 +3,15 @@
 " or remove remote branch only if <bang>
 "
 " option: {
-"   'mode' : '',
-"       // '!' : force remove
+"   'force' : 0/1,
 "   'local' : 1/0,
 "   'remote' : 1/0,
 " }
 function! ZFGitRemoveBranch(toRemove, ...)
     let option = get(a:, 1, {})
+    let force = get(option, 'force', 0)
+    let removeLocal = get(option, 'local', 1)
+    let removeRemote = get(option, 'remote', 1)
 
     let url = ZFGitGetRemoteUrl()
     if empty(url)
@@ -22,6 +24,8 @@ function! ZFGitRemoveBranch(toRemove, ...)
 
     let targetInfo = ZFGitBranchPick(a:toRemove, {
                 \   'title' : 'choose branch to remove:',
+                \   'local' : removeLocal,
+                \   'remote' : removeRemote,
                 \ })
     if empty(targetInfo['branch'])
         return {
@@ -31,7 +35,7 @@ function! ZFGitRemoveBranch(toRemove, ...)
     endif
     let toRemove = targetInfo['branch']
 
-    if get(option, 'local', 1)
+    if removeLocal
         let curBranch = ZFGitGetCurBranch()
         if curBranch == toRemove
             redraw
@@ -48,7 +52,8 @@ function! ZFGitRemoveBranch(toRemove, ...)
 
     let gitInfo = ZFGitPrepare({
                 \   'module' : 'ZFGitRemoveBranch',
-                \   'needPwd' : 1,
+                \   'confirm' : 0,
+                \   'needPwd' : removeRemote,
                 \ })
     if empty(gitInfo)
         return
@@ -63,14 +68,14 @@ function! ZFGitRemoveBranch(toRemove, ...)
     endif
 
     let hint = 'REPO: ' . gitInfo.git_remoteurl
-    if get(option, 'local', 1)
-        if get(option, 'remote', 1)
+    if removeLocal
+        if removeRemote
             let targetHint = 'local and REMOTE'
         else
             let targetHint = 'local'
         endif
     else
-        if get(option, 'remote', 1)
+        if removeRemote
             let targetHint = 'REMOTE'
         else
             redraw
@@ -99,30 +104,37 @@ function! ZFGitRemoveBranch(toRemove, ...)
         call ZFGitCmd(config)
     endfor
 
-    if get(option, 'local', 1)
+    if removeLocal
         redraw
         echo 'removing local branch "' . toRemove . '" ... '
-        let removeLocalResult = ZFGitCmd(printf('git branch -D "%s"', toRemove))
+        let removeLocalResult = ZFGitCmd(printf('git branch %s "%s"'
+                    \ , force ? '-D' : '-d'
+                    \ , toRemove
+                    \ ))
     endif
 
-    if get(option, 'remote', 1)
+    if removeRemote
         redraw
         echo 'removing remote branch "' . toRemove . '" ... '
-        let pushResult = ZFGitCmd(printf('git push "%s" --delete "%s"', remoteUrl, toRemove))
-        let pushResult = substitute(pushResult, ':[^:]*@', '@', 'g')
+        let removeRemoteResult = ZFGitCmd(printf('git push "%s" --delete "%s"', remoteUrl, toRemove))
+        let removeRemoteResult = substitute(removeRemoteResult, ':[^:]*@', '@', 'g')
         call ZFGitCmd(printf('git fetch -p "%s" "+refs/heads/*:refs/remotes/origin/*"', remoteUrl))
     endif
 
     redraw
-    if get(option, 'local', 1)
+    if removeLocal
         echo 'remove local branch:'
         echo removeLocalResult
-        echo "\n"
     endif
-    if get(option, 'remote', 1)
+    if removeRemote
+        if removeLocal
+            echo "\n"
+        endif
         echo 'remove remote branch:'
+        echo removeRemoteResult
     endif
-    echo pushResult
 endfunction
-command! -nargs=* -bang -complete=customlist,ZFGitCmdComplete_branch ZFGitRemoveBranch :call ZFGitRemoveBranch(<q-args>, {'local' : (<q-bang> == '!' ? 0 : 1)})
+command! -nargs=* -bang -complete=customlist,ZFGitCmdComplete_branch ZFGitRemoveBranch :call ZFGitRemoveBranch(<q-args>, {'force' : (<q-bang> == '!' ? 1 : 0)})
+command! -nargs=* -bang -complete=customlist,ZFGitCmdComplete_branch ZFGitRemoveBranchLocal :call ZFGitRemoveBranch(<q-args>, {'force' : (<q-bang> == '!' ? 1 : 0), 'remote':0})
+command! -nargs=* -bang -complete=customlist,ZFGitCmdComplete_branch ZFGitRemoveBranchRemote :call ZFGitRemoveBranch(<q-args>, {'force' : (<q-bang> == '!' ? 1 : 0), 'local':0})
 
