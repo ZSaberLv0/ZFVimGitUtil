@@ -67,35 +67,37 @@ function! ZFGitRemoveBranch(toRemove, ...)
         let remoteUrl = url
     endif
 
-    let hint = 'REPO: ' . gitInfo.git_remoteurl
-    if removeLocal
-        if removeRemote
-            let targetHint = 'local and REMOTE'
+    if removeRemote || force
+        let hint = 'REPO: ' . gitInfo.git_remoteurl
+        if removeLocal
+            if removeRemote
+                let targetHint = 'local and REMOTE'
+            else
+                let targetHint = 'local'
+            endif
         else
-            let targetHint = 'local'
+            if removeRemote
+                let targetHint = 'REMOTE'
+            else
+                redraw
+                echo 'no target to remove'
+                echo '    ' . toRemove
+                return
+            endif
         endif
-    else
-        if removeRemote
-            let targetHint = 'REMOTE'
-        else
+        let hint .= "\n[ZFGitRemoveBranch] about to remove " . targetHint . " branch:"
+        let hint .= "\n    " . toRemove
+        let hint .= "\n"
+        let hint .= "\nWARNING: can not undo"
+        let hint .= "\nenter `got it` to continue: "
+        call inputsave()
+        let input = input(hint)
+        call inputrestore()
+        if input != 'got it'
             redraw
-            echo 'no target to remove'
-            echo '    ' . toRemove
+            echo 'canceled'
             return
         endif
-    endif
-    let hint .= "\n[ZFGitRemoveBranch] about to remove " . targetHint . " branch:"
-    let hint .= "\n    " . toRemove
-    let hint .= "\n"
-    let hint .= "\nWARNING: can not undo"
-    let hint .= "\nenter `got it` to continue: "
-    call inputsave()
-    let input = input(hint)
-    call inputrestore()
-    if input != 'got it'
-        redraw
-        echo 'canceled'
-        return
     endif
 
     call ZFGitCmd(printf('git config user.email "%s"', gitInfo.git_user_email))
