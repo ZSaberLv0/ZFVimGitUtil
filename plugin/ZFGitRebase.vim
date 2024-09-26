@@ -15,5 +15,5 @@ function! ZFGitRebase(baseBranch)
 
     execute ':Git rebase -i ' . substitute(targetInfo['branch'], ' ', '\\ ', 'g')
 endfunction
-command! -nargs=* ZFGitRebase :call ZFGitRebase(<q-args>)
+command! -nargs=* -complete=customlist,ZFGitCmdComplete_branch ZFGitRebase :call ZFGitRebase(<q-args>)
 
