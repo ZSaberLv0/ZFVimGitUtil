@@ -57,6 +57,7 @@ function! ZFGitBatchFetch(...)
     for path in keys(changes)
         let taskResult = {}
         let taskSuccess = 1
+        redraw | echo 'fetching... ' . path
         try
             execute 'cd ' . substitute(path, ' ', '\\ ', 'g')
             silent let taskResult = ZFGitFetch(option)
