@@ -45,10 +45,10 @@ Plugin 'tpope/vim-fugitive' " optional, for :ZFGitRebase only
 
             `git fetch --all`, if fetch success without password required, then you are done
 
-* `:ZFGitBatchPull` / `:ZFGitBatchPush [comment]`
+* `:ZFGitBatchFetch` / `:ZFGitBatchPull` / `:ZFGitBatchPush [comment]`
 
     find and go through all git repo under cwd,
-    and try to pull/push
+    and try to fetch/pull/push
 
 * `:ZFGitClean`
 
