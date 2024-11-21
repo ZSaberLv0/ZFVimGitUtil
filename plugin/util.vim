@@ -237,7 +237,7 @@ function! ZFGitGetAllLocalBranch()
         " * master
         " ^\*? *
         let line = substitute(line, '^\*\= *', '', '')
-        if !empty(line)
+        if !empty(line) && index(ret, line) < 0
             call add(ret, line)
         endif
     endfor
@@ -252,7 +252,7 @@ function! ZFGitGetAllRemoteBranch()
         let line = substitute(line, '.*\-> *', '', '')
         " ^ *origin\/
         let line = substitute(line, '^ *origin\/', '', '')
-        if !empty(line)
+        if !empty(line) && index(ret, line) < 0
             call add(ret, line)
         endif
     endfor

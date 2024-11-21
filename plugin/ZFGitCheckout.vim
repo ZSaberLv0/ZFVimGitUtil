@@ -16,7 +16,7 @@ function! ZFGitCheckout(branch)
                     \ || filereadable(a:branch)
                     \ || isdirectory(a:branch)
                     \ || !empty(split(ZFGitCmd(printf('git status -s "%s"', a:branch)), "\n"))
-            echo ZFGitCmd(printf('git checkout "%s"', a:branch))
+            echo s:checkout(a:branch)
             return (v:shell_error == 0 ? a:branch : '')
         endif
         echo 'branch not exist:'
@@ -41,7 +41,17 @@ function! ZFGitCheckout(branch)
         return ''
     endif
 
-    echo ZFGitCmd(printf('git checkout "%s"', targetInfo['branch']))
+    echo s:checkout(targetInfo['branch'])
     return (v:shell_error == 0 ? targetInfo['branch'] : '')
+endfunction
+
+function! s:checkout(branch)
+    let allLocal = ZFGitGetAllLocalBranch()
+    let allRemote = ZFGitGetAllRemoteBranch()
+    if index(allLocal, a:branch) < 0 && index(allRemote, a:branch) >= 0
+        return ZFGitCmd(printf('git checkout -b "%s" "origin/%s"', a:branch, a:branch))
+    else
+        return ZFGitCmd(printf('git checkout "%s"', a:branch))
+    endif
 endfunction
 
