@@ -1,6 +1,7 @@
 
 " option: {
 "   'all' : 0/1, // whether include repo which has no changes, default: 0
+"   'filter' : 1/0, // whether apply g:ZFGitRepoFilter
 " }
 "
 " return: {
@@ -12,6 +13,7 @@
 function! ZFGitStatus(...)
     let option = get(a:, 1, {})
     let all = get(option, 'all', 0)
+    let filter = get(option, 'filter', 0)
 
     redraw | echo 'checking...'
 
@@ -33,20 +35,22 @@ function! ZFGitStatus(...)
         endif
 
         " filter
-        let pathAbs = fnamemodify(path, ':p')
-        let filtered = 0
-        for T_filter in filters
-            if type(T_filter) == T_func
-                let filtered = T_filter(pathAbs)
-            else
-                let filtered = (match(pathAbs, T_filter) >= 0) ? 1 : 0
+        if filter
+            let pathAbs = fnamemodify(path, ':p')
+            let filterFlag = 0
+            for T_filter in filters
+                if type(T_filter) == T_func
+                    let filterFlag = T_filter(pathAbs)
+                else
+                    let filterFlag = (match(pathAbs, T_filter) >= 0) ? 1 : 0
+                endif
+                if filterFlag
+                    break
+                endif
+            endfor
+            if filterFlag
+                continue
             endif
-            if filtered
-                break
-            endif
-        endfor
-        if filtered
-            continue
         endif
 
         let change = split(ZFGitCmd(printf('cd "%s" && git status -s', path)), "\n")
@@ -78,5 +82,5 @@ function! ZFGitStatus(...)
     let @t = hint
     return changes
 endfunction
-command! -nargs=0 ZFGitStatus :call ZFGitStatus()
+command! -nargs=0 -bang ZFGitStatus :call ZFGitStatus(<q-bang> == '!' ? {} : {'filter':0})
 
