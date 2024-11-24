@@ -13,7 +13,7 @@
 function! ZFGitStatus(...)
     let option = get(a:, 1, {})
     let all = get(option, 'all', 0)
-    let filter = get(option, 'filter', 0)
+    let filter = get(option, 'filter', 1)
 
     redraw | echo 'checking...'
 
