@@ -50,6 +50,19 @@ Plugin 'tpope/vim-fugitive' " optional, for :ZFGitRebase only
     find and go through all git repo under cwd,
     and try to fetch/pull/push
 
+    to filter out some unexpected repo:
+
+    ```vim
+    function! YourFilterFunc(repoPath)
+        " return 1 if the repo should be filtered
+        return 0
+    endfunction
+    let g:ZFGitRepoFilter = {
+                \   'YourModuleName1' : '\<_repo\>',
+                \   'YourModuleName2' : function('YourFilterFunc'),
+                \ }
+    ```
+
 * `:ZFGitClean`
 
     fill a temp file with untracked and ignored files,

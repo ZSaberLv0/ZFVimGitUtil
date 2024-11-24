@@ -24,10 +24,29 @@ function! ZFGitStatus(...)
     let hasChanges = 0
     let changes = {}
     let postFixLen = len('/.git')
+    let filters = values(get(g:, 'ZFGitRepoFilter', {}))
+    let T_func = type(function('type'))
     for path in paths
         let path = strpart(path, 0, len(path) - postFixLen)
         if empty(path)
             let path = '.'
+        endif
+
+        " filter
+        let pathAbs = fnamemodify(path, ':p')
+        let filtered = 0
+        for T_filter in filters
+            if type(T_filter) == T_func
+                let filtered = T_filter(pathAbs)
+            else
+                let filtered = (match(pathAbs, T_filter) >= 0) ? 1 : 0
+            endif
+            if filtered
+                break
+            endif
+        endfor
+        if filtered
+            continue
         endif
 
         let change = split(ZFGitCmd(printf('cd "%s" && git status -s', path)), "\n")
