@@ -34,6 +34,7 @@ endfunction
 " return empty or:
 "   choice : y/extraChoice
 "   git_remoteurl
+"   git_pushurl
 "   git_user_email
 "   git_user_name
 "   git_user_pwd
@@ -347,8 +348,20 @@ function! ZFGitConfigGet(cmd)
 endfunction
 
 function! ZFGitGetInfo()
+    let ret = s:ZFGitGetInfo()
+    if ret.git_remotetype != 'ssh'
+        let pos = match(ret.git_remoteurl, '://') + len('://')
+        " http://user:pwd@github.com/user/repo
+        let ret.git_pushurl = strpart(ret.git_remoteurl, 0, pos) . ret.git_user_name . ':' . ret.git_user_pwd . '@' . strpart(ret.git_remoteurl, pos)
+    else
+        let ret.git_pushurl = ret.git_remoteurl
+    endif
+    return ret
+endfunction
+function! s:ZFGitGetInfo()
     let ret = {
                 \   'git_remoteurl' : '',
+                \   'git_pushurl' : '',
                 \   'git_remotetype' : '',
                 \   'git_user_email' : '',
                 \   'git_user_name' : '',

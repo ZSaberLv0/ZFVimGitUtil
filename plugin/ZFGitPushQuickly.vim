@@ -47,15 +47,7 @@ function! ZFGitPushQuickly(...)
         let gitInfo.choice = 'u'
     endif
 
-    let url = ZFGitGetRemoteUrl()
-    if empty(url)
-        echo 'unable to parse remote url'
-        return {
-                    \   'exitCode' : 'ZF_ERROR',
-                    \   'output' : 'unable to parse remote url',
-                    \ }
-    endif
-    if ZFGitCheckSsh(url)
+    if ZFGitCheckSsh(gitInfo.git_remoteurl)
         echo 'ssh repo without ssh key'
         return {
                     \   'exitCode' : 'ZF_ERROR',
@@ -69,7 +61,7 @@ function! ZFGitPushQuickly(...)
         if get(option, 'forcePushLocalCommits', 0)
             let input = 'got it'
         else
-            let hint = 'REPO: ' . url
+            let hint = 'REPO: ' . gitInfo.git_remoteurl
             let hint .= "\n[ZFGitPushQuickly] WARNING: you have local commits not pushed,"
             let hint .= "\n    continue quick push may cause confused result,"
             let hint .= "\n    it's adviced to manually operate:"
@@ -94,16 +86,8 @@ function! ZFGitPushQuickly(...)
         let softPullMode = 1
     endif
 
-    if gitInfo.git_remotetype != 'ssh'
-        let pos = match(url, '://') + len('://')
-        " http://user:pwd@github.com/user/repo
-        let remoteUrl = strpart(url, 0, pos) . gitInfo.git_user_name . ':' . gitInfo.git_user_pwd . '@' . strpart(url, pos)
-    else
-        let remoteUrl = url
-    endif
-
     redraw
-    echo 'updating... ' . url
+    echo 'updating... ' . gitInfo.git_remoteurl
     call ZFGitCmd(printf('git config user.email "%s"', gitInfo.git_user_email))
     call ZFGitCmd(printf('git config user.name "%s"', gitInfo.git_user_name))
     for config in g:zf_git_extra_config
@@ -141,15 +125,15 @@ function! ZFGitPushQuickly(...)
                         \ }
         endif
     endif
-    call ZFGitCmd(printf('git fetch "%s" "+refs/heads/*:refs/remotes/origin/*"', remoteUrl))
+    call ZFGitCmd(printf('git fetch "%s" "+refs/heads/*:refs/remotes/origin/*"', gitInfo.git_pushurl))
 
     if softPullMode
-        let pullResult = ZFGitCmd(printf('git pull "%s" "%s"', remoteUrl, branch))
+        let pullResult = ZFGitCmd(printf('git pull "%s" "%s"', gitInfo.git_pushurl, branch))
     else
         let pullResult = ZFGitCmd(printf('git reset --hard "origin/%s"', branch))
         if v:shell_error == '0'
             " pull only if remote branch exists
-            call ZFGitCmd(printf('git pull "%s" "%s"', remoteUrl, branch))
+            call ZFGitCmd(printf('git pull "%s" "%s"', gitInfo.git_pushurl, branch))
         endif
     endif
 
@@ -174,7 +158,7 @@ function! ZFGitPushQuickly(...)
     if gitInfo.choice == 'u'
         call ZFGitCmd('git reset HEAD')
         redraw
-        let msg = 'REPO: ' . url
+        let msg = 'REPO: ' . gitInfo.git_remoteurl
         let msg .= "\n" . pullResult
         let msg .= "\n" . ZFGitCmd('git show -s --format=%B')
         echo msg
@@ -185,14 +169,14 @@ function! ZFGitPushQuickly(...)
     endif
 
     redraw
-    echo 'pushing... ' . url
+    echo 'pushing... ' . gitInfo.git_remoteurl
     call ZFGitCmd('git add -A')
     call ZFGitCmd(printf('git commit -m "%s"', comment))
-    let pushResult = ZFGitCmd(printf('git push "%s" HEAD', remoteUrl))
+    let pushResult = ZFGitCmd(printf('git push "%s" HEAD', gitInfo.git_pushurl))
     if v:shell_error == 0
-        call ZFGitCmd(printf('git fetch "%s" "+refs/heads/*:refs/remotes/origin/*"', remoteUrl))
+        call ZFGitCmd(printf('git fetch "%s" "+refs/heads/*:refs/remotes/origin/*"', gitInfo.git_pushurl))
     else
-        call ZFGitCmd(printf('git fetch "%s" "+refs/heads/*:refs/remotes/origin/*"', remoteUrl))
+        call ZFGitCmd(printf('git fetch "%s" "+refs/heads/*:refs/remotes/origin/*"', gitInfo.git_pushurl))
         " soft reset to undo commit,
         " prevent next push's hard reset from causing commits dropped
         call ZFGitCmd(printf('git reset "origin/%s"', branch))
@@ -208,7 +192,7 @@ function! ZFGitPushQuickly(...)
         call ZFGitCmd(printf('git branch --set-upstream "%s" "origin/%s"', branch, branch))
     endif
 
-    let pushResult = printf("REPO: %s\n%s", url, pushResult)
+    let pushResult = printf("REPO: %s\n%s", gitInfo.git_remoteurl, pushResult)
     " strip password
     let pushResult = substitute(pushResult, ':[^:]*@', '@', 'g')
     echo pushResult

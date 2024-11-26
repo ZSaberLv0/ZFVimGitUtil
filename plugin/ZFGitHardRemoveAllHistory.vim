@@ -3,20 +3,14 @@ let s:scriptPath = expand('<sfile>:p:h:h') . '/misc/'
 
 " hard remove all history of git repo
 function! ZFGitHardRemoveAllHistory()
-    let url = ZFGitGetRemoteUrl()
-    if empty(url)
-        echo 'unable to parse remote url'
-        return
-    endif
-    if ZFGitCheckSsh(url)
-        return
-    endif
-
     let gitInfo = ZFGitPrepare({
                 \   'module' : 'ZFGitHardRemoveAllHistory',
                 \   'needPwd' : 1,
                 \ })
     if empty(gitInfo)
+        return
+    endif
+    if ZFGitCheckSsh(gitInfo.git_remoteurl)
         return
     endif
 

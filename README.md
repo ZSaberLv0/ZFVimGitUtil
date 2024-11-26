@@ -207,6 +207,7 @@ Plugin 'tpope/vim-fugitive' " optional, for :ZFGitRebase only
 
     * `choice` : y/extraChoice
     * `git_remoteurl`
+    * `git_pushurl`
     * `git_user_email`
     * `git_user_name`
     * `git_user_pwd`
@@ -218,6 +219,7 @@ Plugin 'tpope/vim-fugitive' " optional, for :ZFGitRebase only
     return:
 
     * `git_remoteurl`
+    * `git_pushurl`
     * `git_user_email`
     * `git_user_name`
     * `git_user_pwd`
