@@ -4,7 +4,7 @@
 " }
 function! ZFGitHardRemoveFileHistory(localPath, ...)
     let option = get(a:, 1, {})
-    let autoPush = get(option, 'autoPush', 0)
+    let autoPush = get(option, 'autoPush', 1)
 
     if autoPush
         let hint = "[ZFGitHardRemoveFileHistory] WARNING: can not undo"

@@ -101,7 +101,7 @@ Plugin 'tpope/vim-fugitive' " optional, for :ZFGitRebase only
 
     config git mirror quickly
 
-* `:ZFGitHardRemoveAllHistory`
+* `:ZFGitHardRemoveAllHistory` / `:ZFGitHardRemoveFileHistory`
 
     like the name, use with caution
 
