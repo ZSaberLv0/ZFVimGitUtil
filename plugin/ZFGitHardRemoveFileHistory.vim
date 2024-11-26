@@ -46,20 +46,20 @@ function! ZFGitHardRemoveFileHistory(localPath, ...)
         echo rmResult
         return
     endif
-
-    call ZFGitCmd('git reflog expire --expire=now --all')
-    call ZFGitCmd('git gc --prune=now --aggressive')
     redraw
 
     if autoPush
         echo 'running push --force'
-        let pushResult = ZFGitCmd(printf('git push --force "%s" HEAD', gitInfo.git_pushurl))
-        redraw
-        echo pushResult
+        let finalResult = ZFGitCmd(printf('git push --force "%s" HEAD', gitInfo.git_pushurl))
     else
-        echo 'file history removed: ' . localPath
-        echo 'use `git push --force` to take effect'
+        let finalResult = 'file history removed: ' . localPath
+        let finalResult .= "\n" . 'use `git push --force` to take effect'
     endif
+
+    call ZFGitCmd('git reflog expire --expire=now --all')
+    call ZFGitCmd('git gc --prune=now --aggressive')
+    redraw
+    echo finalResult
 endfunction
 command! -nargs=+ -complete=file ZFGitHardRemoveFileHistory :call ZFGitHardRemoveFileHistory(<q-args>)
 
