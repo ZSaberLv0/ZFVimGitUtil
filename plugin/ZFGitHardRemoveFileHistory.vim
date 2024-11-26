@@ -6,6 +6,12 @@ function! ZFGitHardRemoveFileHistory(localPath, ...)
     let option = get(a:, 1, {})
     let autoPush = get(option, 'autoPush', 1)
 
+    if isdirectory(a:localPath)
+        let localPath = substitute(a:localPath, '[\/\\]\+$', '', '') . '/*'
+    else
+        let localPath = a:localPath
+    endif
+
     if autoPush
         let hint = "[ZFGitHardRemoveFileHistory] WARNING: can not undo"
         let hint .= "\n    would use `push --force` to remove from remote"
@@ -18,12 +24,15 @@ function! ZFGitHardRemoveFileHistory(localPath, ...)
             echo 'canceled'
             return
         endif
-    endif
 
-    if isdirectory(a:localPath)
-        let localPath = substitute(a:localPath, '[\/\\]\+$', '', '') . '/*'
-    else
-        let localPath = a:localPath
+        let gitInfo = ZFGitPrepare({
+                    \   'module' : 'ZFGitHardRemoveFileHistory',
+                    \   'needPwd' : 1,
+                    \   'confirm' : 0,
+                    \   'extraInfo' : {
+                    \      'to remove' : localPath,
+                    \   },
+                    \ })
     endif
 
     redraw
@@ -43,7 +52,9 @@ function! ZFGitHardRemoveFileHistory(localPath, ...)
     redraw
 
     if autoPush
+        echo 'running push --force'
         let pushResult = ZFGitCmd(printf('git push --force "%s" HEAD', gitInfo.git_pushurl))
+        redraw
         echo pushResult
     else
         echo 'file history removed: ' . localPath
