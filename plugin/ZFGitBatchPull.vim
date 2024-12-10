@@ -84,7 +84,7 @@ function! ZFGitBatchPull(...)
         finally
             execute 'cd ' . substitute(pwdSaved, ' ', '\\ ', 'g')
         endtry
-        if !empty(taskResult)
+        if !empty(get(taskResult, 'output', ''))
             call add(taskHint, taskResult['output'])
         endif
         let taskResult['changes'] = changes[path]

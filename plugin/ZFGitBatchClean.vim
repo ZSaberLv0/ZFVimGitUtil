@@ -1,6 +1,6 @@
 
 " option: {
-"   'comment' : 'push comment',
+"   ... // params passed to ZFGitClean
 " }
 "
 " return: {
@@ -11,7 +11,7 @@
 "       // other: error
 "   'task' : {
 "     'repo path' : {
-"       'exitCode' : '', // result of ZFGitPushQuickly
+"       'exitCode' : '', // result of ZFGitCleanRun
 "       'output' : '',
 "       'changes' : [ // changes of ZFGitStatus
 "         'U xxx',
@@ -20,10 +20,12 @@
 "     },
 "   },
 " }
-function! ZFGitBatchPush(...)
+function! ZFGitBatchClean(...)
     let option = get(a:, 1, {})
-    let comment = get(option, 'comment', '')
-    let changes = ZFGitStatus()
+    let cleanAllSubmodule = get(option, 'cleanAllSubmodule', 1)
+    let changes = ZFGitStatus({
+                \   'filter' : 0,
+                \ })
     if empty(changes)
         redraw | echo 'no changes'
         return {
@@ -33,7 +35,7 @@ function! ZFGitBatchPush(...)
     endif
 
     let hint = "\n============================================================"
-    let hint .= "\n[ZFGitBatchPush] try to push all repos under current dir using default config"
+    let hint .= "\n[ZFGitBatchClean] try to clean all repos' local changes under current dir, can not undo"
     let hint .= "\n"
     let hint .= "\nif you really know what you are doing,"
     let hint .= "\nenter `got it` to continue: "
@@ -60,10 +62,7 @@ function! ZFGitBatchPush(...)
         let taskSuccess = 1
         try
             execute 'cd ' . substitute(path, ' ', '\\ ', 'g')
-            let taskResult = ZFGitPushQuickly({
-                        \   'mode' : '!',
-                        \   'comment' : comment,
-                        \ })
+            let taskResult = ZFGitClean(option)
         catch
             let taskResult = {
                         \   'exitCode' : 'ZF_ERROR',
@@ -88,6 +87,7 @@ function! ZFGitBatchPush(...)
     endfor
 
     execute 'cd ' . substitute(pwdSaved, ' ', '\\ ', 'g')
+    call insert(taskHint, "local changes cleaned:\n", 0)
     let taskHintText = join(taskHint, "\n")
     let @t = taskHintText
     redraw
@@ -97,5 +97,5 @@ function! ZFGitBatchPush(...)
                 \   'task' : task,
                 \ }
 endfunction
-command! -nargs=* ZFGitBatchPush :call ZFGitBatchPush({'comment':<q-args>})
+command! -bang ZFGitBatchClean :call ZFGitBatchClean({'backup':<q-bang>!='!'})
 

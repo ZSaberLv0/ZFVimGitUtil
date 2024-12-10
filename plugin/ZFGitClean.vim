@@ -1,5 +1,5 @@
 
-function! ZFGitClean()
+function! ZFGitCleanUI()
     let cleanInfo = ZFGitCleanInfo()
     if 1
                 \ && empty(cleanInfo['modified'])
@@ -13,7 +13,60 @@ function! ZFGitClean()
     call s:setupBuffer(cleanInfo, lines)
     redraw
 endfunction
-command! -nargs=0 ZFGitClean :call ZFGitClean()
+command! -nargs=0 ZFGitClean :call ZFGitCleanUI()
+
+" option: {
+"   'cleanAllSubmodule' : 1/0,
+"   'backup' : 1/0,
+" }
+" return: {
+"   'exitCode' : '0',
+"   'output' : '',
+" }
+function! ZFGitClean(...)
+    let option = get(a:, 1, {})
+    let cleanInfo = ZFGitCleanInfo()
+    if 1
+                \ && !get(option, 'cleanAllSubmodule', 1)
+                \ && empty(cleanInfo['modified'])
+                \ && empty(cleanInfo['deleted'])
+                \ && empty(cleanInfo['untracked'])
+                \ && empty(cleanInfo['ignored'])
+        return {
+                    \   'exitCode' : 'ZF_CANCELED',
+                    \   'output' : 'already clean',
+                    \ }
+    endif
+    if get(option, 'cleanAllSubmodule', 1)
+        let cleanInfo['modified'][g:ZFGitClean_cleanAllSubmodule] = 1
+    endif
+    call ZFGitCleanRun(cleanInfo, option)
+    let output = fnamemodify(getcwd(), ':t') . '/'
+    let typeNameMap = {
+                \   'modified' : 'M',
+                \   'deleted' : 'D',
+                \   'untracked' : '?',
+                \   'ignored' : '-',
+                \ }
+    for type in keys(cleanInfo)
+        let toClean = keys(cleanInfo[type])
+        let i = 0
+        let iEnd = len(toClean)
+        while i < iEnd
+            if toClean[i] != g:ZFGitClean_cleanAllSubmodule
+                let output .= printf("\n    %s: %s", typeNameMap[type], toClean[i])
+            endif
+            let i += 1
+        endwhile
+    endfor
+    return {
+                \   'exitCode' : '0',
+                \   'output' : output,
+                \ }
+endfunction
+
+" add to cleanInfo.modified to clean all submodule
+let g:ZFGitClean_cleanAllSubmodule = '<cleanAllSubmodule>'
 
 " return: {
 "   'modified' : {},
@@ -85,6 +138,7 @@ function! ZFGitCleanRun(cleanInfo, ...)
             let i += 1
         endwhile
     endfor
+    redraw
 endfunction
 
 " ============================================================
@@ -203,6 +257,7 @@ function! ZF_GitClean_action()
         call s:cleanFileOrDir(b:ZFGitCleanInfo, toClean[i], autoBackup)
         let i += 1
     endwhile
+    redraw
 
     bdelete!
     ZFGitClean
@@ -229,7 +284,7 @@ function! s:cleanFileOrDir(cleanInfo, fileOrDir, autoBackup)
         else
             call ZFGitCmd(printf('rm -rf "%s"', a:fileOrDir))
         endif
-    elseif a:fileOrDir == s:cleanAllSubmodule
+    elseif a:fileOrDir == g:ZFGitClean_cleanAllSubmodule
         call ZFGitCmd('git submodule foreach --recursive git reset --hard')
         for git in split(glob('**/.git', 1), "\n")
             " [\/\\]*\.git
@@ -241,8 +296,6 @@ function! s:cleanFileOrDir(cleanInfo, fileOrDir, autoBackup)
         endfor
     endif
 endfunction
-
-let s:cleanAllSubmodule = '<cleanAllSubmodule>'
 
 function! s:tryBackup(fileOrDir)
     if !exists('*ZFBackupSave')

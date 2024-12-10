@@ -70,7 +70,7 @@ function! ZFGitBatchFetch(...)
         finally
             execute 'cd ' . substitute(pwdSaved, ' ', '\\ ', 'g')
         endtry
-        if !empty(taskResult)
+        if !empty(get(taskResult, 'output', ''))
             call add(taskHint, taskResult['output'])
         endif
         let task[path] = taskResult
