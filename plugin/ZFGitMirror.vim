@@ -45,7 +45,7 @@ function! ZFGitMirror(option)
     if empty(mirrorFrom) || empty(mirrorTo)
         if reset
             if !empty(mirrorFromOld)
-                call ZFGitCmd(printf('git config %s --remove-section url."%s"', globalFix, mirrorFromOld))
+                call ZFGitCmd(printf('git config %s --remove-section url."%s"', globalFix, mirrorToOld))
             endif
             let mirrorFromNew = ''
             let mirrorToNew = ''
@@ -61,7 +61,7 @@ function! ZFGitMirror(option)
         endif
     else
         if !empty(mirrorFromOld)
-            call ZFGitCmd(printf('git config %s --remove-section url."%s"', globalFix, mirrorFromOld))
+            call ZFGitCmd(printf('git config %s --remove-section url."%s"', globalFix, mirrorToOld))
         endif
         call ZFGitCmd(printf('git config %s url."%s".insteadOf "%s"', globalFix, mirrorTo, mirrorFrom))
         let mirrorFromNew = mirrorFrom
