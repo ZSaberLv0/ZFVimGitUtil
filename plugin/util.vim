@@ -397,8 +397,8 @@ function! s:ZFGitGetInfo()
         endif
     endfor
 
-    let ret.git_user_email = ZFGitConfigGet('git config user.email')
-    let ret.git_user_name = ZFGitConfigGet('git config user.name')
+    let ret.git_user_email = ZFGitConfigGet('git config --local user.email')
+    let ret.git_user_name = ZFGitConfigGet('git config --local user.name')
     if !empty(ret.git_user_email) && !empty(ret.git_user_name)
         if ret.git_user_email == get(g:, 'zf_git_user_email', '') && ret.git_user_name == get(g:, 'zf_git_user_name', '')
             let ret.git_user_pwd = get(g:, 'zf_git_user_token', '')

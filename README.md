@@ -147,7 +147,7 @@ Plugin 'tpope/vim-fugitive' " optional, for :ZFGitRebase only
                 \ ]
         ```
 
-    1. `git config user.name` / `git config user.email` to check from local repo
+    1. `git config --local user.name` / `git config --local user.email` to check from local repo
     1. your global custom setting
 
         ```
