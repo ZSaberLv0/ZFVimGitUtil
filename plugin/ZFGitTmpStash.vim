@@ -23,7 +23,6 @@ function! ZFGitTmpStash(...)
         echo 'no changes'
         return
     endif
-    let skippedHint = []
     let hint = []
     for status in split(statuses, "\n")
         if len(status) <= 3
@@ -37,7 +36,6 @@ function! ZFGitTmpStash(...)
             continue
         endif
         if isdirectory(file)
-            call add(skippedHint, '    ' . file)
             continue
         endif
 
@@ -64,19 +62,25 @@ function! ZFGitTmpStash(...)
         endif
     endfor
 
-    if empty(skippedHint) && empty(hint)
+    for file in split(ZFGitCmd('git ls-files --others --exclude-standard'), "\n")
+        if empty(fileOrEmpty)
+                    \ || file == fileOrEmpty
+                    \ || (stridx(file, fileOrEmpty) == 0 && file[len(fileOrEmpty)] == '/')
+            call s:cp(file, printf('%s/%s', s:basePath, file))
+            if clean
+                if X == '?'
+                    call s:rm(file)
+                else
+                    call s:reset(file)
+                endif
+            endif
+            call add(hint, '    ' . file)
+        endif
+    endfor
+
+    if empty(hint)
         echo 'no changes'
         return
-    endif
-    if !empty(skippedHint)
-        if len(skippedHint) == 1
-            echo 'skipped: ' . skippedHint[0]
-        else
-            echo 'skipped:'
-            for item in skippedHint
-                echo item
-            endfor
-        endif
     endif
     if !empty(hint)
         if len(hint) == 1
