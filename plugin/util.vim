@@ -4,6 +4,7 @@ if !exists('g:zf_git_extra_config')
                 \   'git config core.filemode false',
                 \   'git config core.autocrlf false',
                 \   'git config core.safecrlf true',
+                \   'git config core.quotepath false',
                 \ ]
 endif
 

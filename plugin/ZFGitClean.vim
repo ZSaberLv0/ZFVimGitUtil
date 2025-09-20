@@ -285,6 +285,10 @@ function! s:cleanFileOrDir(cleanInfo, fileOrDir, autoBackup)
             call ZFGitCmd(printf('rm -rf "%s"', a:fileOrDir))
         endif
     elseif a:fileOrDir == g:ZFGitClean_cleanAllSubmodule
+        for config in g:zf_git_extra_config
+            call ZFGitCmd(config)
+            call ZFGitCmd('git submodule foreach --recursive ' . config)
+        endfor
         call ZFGitCmd('git submodule foreach --recursive git reset --hard')
         for git in split(glob('**/.git', 1), "\n")
             " [\/\\]*\.git
