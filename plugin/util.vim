@@ -560,3 +560,37 @@ function! ZFGitCmdComplete_changedPath(ArgLead, CmdLine, CursorPos)
     return sort(ret)
 endfunction
 
+" ============================================================
+function! ZFGitSymlinkGetAll()
+    if (has('win32') || has('win64')) && !has('unix')
+        return []
+    endif
+    let ret = []
+    for f in split(ZFGitCmd('find . -type l'), "\n")
+        if isdirectory(f)
+            call add(ret, fnamemodify(f, ':.'))
+        endif
+    endfor
+    return ret
+endfunction
+function! ZFGitSymlinkCheck(allSymlink, ck)
+    let ck = a:ck
+    if empty(ck) || ck == '.' || ck == '..'
+        return 0
+    endif
+    let ckLen = len(ck)
+    for f in a:allSymlink
+        let len = len(f)
+        if ckLen == len
+            if ck == f
+                return 1
+            endif
+        elseif ckLen > len
+            if strpart(ck, 0, len) == f && ck[len] == '/'
+                return 1
+            endif
+        endif
+    endfor
+    return 0
+endfunction
+

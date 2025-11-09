@@ -290,7 +290,11 @@ function! s:cleanFileOrDir(cleanInfo, fileOrDir, autoBackup)
             call ZFGitCmd('git submodule foreach --recursive ' . config)
         endfor
         call ZFGitCmd('git submodule foreach --recursive git reset --hard')
+        let allSymlink = ZFGitSymlinkGetAll()
         for git in split(glob('**/.git', 1), "\n")
+            if ZFGitSymlinkCheck(allSymlink, git)
+                continue
+            endif
             " [\/\\]*\.git
             let path = substitute(git, '[\/\\]*\.git', '', '')
             if empty(path) || !isdirectory(path)

@@ -17,7 +17,15 @@ function! ZFGitStatus(...)
 
     redraw | echo 'checking...'
 
+    let allSymlink = ZFGitSymlinkGetAll()
     let paths = split(glob('**/.git', 1), "\n")
+    let iPath = len(paths) - 1
+    while iPath >= 0
+        if ZFGitSymlinkCheck(allSymlink, paths[iPath])
+            call remove(paths, iPath)
+        endif
+        let iPath = iPath - 1
+    endwhile
     if empty(paths)
         redraw | echo 'no changes'
         return []
