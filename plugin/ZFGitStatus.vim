@@ -2,6 +2,7 @@
 " option: {
 "   'all' : 0/1, // whether include repo which has no changes, default: 0
 "   'filter' : 1/0, // whether apply g:ZFGitRepoFilter
+"   'followSymlink' : 0/1, // whether follow symlink
 " }
 "
 " return: {
@@ -14,18 +15,11 @@ function! ZFGitStatus(...)
     let option = get(a:, 1, {})
     let all = get(option, 'all', 0)
     let filter = get(option, 'filter', 1)
+    let followSymlink = get(option, 'followSymlink', 0)
 
     redraw | echo 'checking...'
 
-    let allSymlink = ZFGitSymlinkGetAll()
-    let paths = split(glob('**/.git', 1), "\n")
-    let iPath = len(paths) - 1
-    while iPath >= 0
-        if ZFGitSymlinkCheck(allSymlink, paths[iPath])
-            call remove(paths, iPath)
-        endif
-        let iPath = iPath - 1
-    endwhile
+    let paths = ZFGitRepoList(followSymlink)
     if empty(paths)
         redraw | echo 'no changes'
         return []

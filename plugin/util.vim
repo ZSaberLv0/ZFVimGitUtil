@@ -562,15 +562,31 @@ endfunction
 
 " ============================================================
 function! ZFGitSymlinkGetAll()
-    if (has('win32') || has('win64')) && !has('unix')
-        return []
-    endif
     let ret = []
-    for f in split(ZFGitCmd('find . -type l'), "\n")
-        if isdirectory(f)
-            call add(ret, fnamemodify(f, ':.'))
-        endif
-    endfor
+    if (has('win32') || has('win64')) && !has('unix')
+        for f in split(ZFGitCmd('dir /AL /S /B'), "\n")
+            let ck = fnamemodify(f, ':.')
+            if !isdirectory(ck)
+                continue
+            endif
+            let exist = 0
+            for t in ret
+                if match(ck, t . '\>') == 0
+                    let exist = 1
+                    break
+                endif
+            endfor
+            if !exist
+                call add(ret, ck)
+            endif
+        endfor
+    else
+        for f in split(ZFGitCmd('find . -type l'), "\n")
+            if isdirectory(f)
+                call add(ret, fnamemodify(f, ':.'))
+            endif
+        endfor
+    endif
     return ret
 endfunction
 function! ZFGitSymlinkCheck(allSymlink, ck)
@@ -592,5 +608,49 @@ function! ZFGitSymlinkCheck(allSymlink, ck)
         endif
     endfor
     return 0
+endfunction
+
+" param:
+"     * 0/1 : follow symlink
+" return: array of all valid git root path
+function! ZFGitRepoList(...)
+    let followSymlink = get(a:, 1, 0)
+
+    if (has('win32') || has('win64')) && !has('unix')
+        let list = []
+        if followSymlink
+            let allSymlink = []
+        else
+            let allSymlink = ZFGitSymlinkGetAll()
+        endif
+        for path in split(system('dir /s/b/ad ".\.git"'), "\n")
+            if !followSymlink && ZFGitSymlinkCheck(allSymlink, path)
+                continue
+            endif
+            call add(list, path)
+        endfor
+    elseif executable('find')
+        let list = split(system(printf('find %s . -type d -name ".git"', followSymlink ? '-L' : '')), "\n")
+    else
+        let list = []
+        if followSymlink
+            let allSymlink = []
+        else
+            let allSymlink = ZFGitSymlinkGetAll()
+        endif
+        for path in split(glob('**/.git', 1), "\n")
+            if !followSymlink && ZFGitSymlinkCheck(allSymlink, path)
+                continue
+            endif
+            " [\/\\]*\.git
+            let path = substitute(path, '[\/\\]*\.git', '', '')
+            if empty(path) || !isdirectory(path)
+                continue
+            endif
+            call add(list, path)
+        endfor
+    endif
+
+    return list
 endfunction
 
