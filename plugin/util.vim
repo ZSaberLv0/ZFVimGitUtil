@@ -571,7 +571,7 @@ function! ZFGitSymlinkGetAll()
             endif
             let exist = 0
             for t in ret
-                if match(ck, t . '\>') == 0
+                if match(ck, substitute(t, '\\', '\\\\', 'g') . '\>') == 0
                     let exist = 1
                     break
                 endif
@@ -590,7 +590,7 @@ function! ZFGitSymlinkGetAll()
     return ret
 endfunction
 function! ZFGitSymlinkCheck(allSymlink, ck)
-    let ck = a:ck
+    let ck = fnamemodify(a:ck, ':.')
     if empty(ck) || ck == '.' || ck == '..'
         return 0
     endif
@@ -602,7 +602,7 @@ function! ZFGitSymlinkCheck(allSymlink, ck)
                 return 1
             endif
         elseif ckLen > len
-            if strpart(ck, 0, len) == f && ck[len] == '/'
+            if strpart(ck, 0, len) == f && (ck[len] == '/' || ck[len] == '\')
                 return 1
             endif
         endif
@@ -623,8 +623,13 @@ function! ZFGitRepoList(...)
         else
             let allSymlink = ZFGitSymlinkGetAll()
         endif
-        for path in split(system('dir /s/b/ad ".\.git"'), "\n")
+        for path in split(system('dir /s /ad /b ".git*" | findstr "\.git$"'), "\n")
             if !followSymlink && ZFGitSymlinkCheck(allSymlink, path)
+                continue
+            endif
+            " [\/\\]*\.git
+            let path = substitute(path, '[\/\\]*\.git', '', '')
+            if empty(path) || !isdirectory(path)
                 continue
             endif
             call add(list, path)
