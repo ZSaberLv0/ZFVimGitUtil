@@ -3,12 +3,22 @@
 " or remove remote branch only if <bang>
 "
 " option: {
+"   'confirm' : 1/0,
 "   'force' : 0/1,
 "   'local' : 1/0,
 "   'remote' : 1/0,
 " }
+" return: {
+"   'exitCode' : '',
+"       // '0': success
+"       // 'ZF_CANCELED': canceled
+"       // 'ZF_ERROR': internal error
+"       // other: error
+"   'output' : '',
+" }
 function! ZFGitRemoveBranch(toRemove, ...)
     let option = get(a:, 1, {})
+    let confirm = get(option, 'confirm', 1)
     let force = get(option, 'force', 0)
     let removeLocal = get(option, 'local', 1)
     let removeRemote = get(option, 'remote', 1)
@@ -16,10 +26,17 @@ function! ZFGitRemoveBranch(toRemove, ...)
     let url = ZFGitGetRemoteUrl()
     if empty(url)
         echo 'unable to parse remote url'
-        return
+        return {
+                    \   'exitCode' : 'ZF_ERROR',
+                    \   'output' : 'unable to parse remote url',
+                    \ }
     endif
     if ZFGitCheckSsh(url)
-        return
+        echo 'ssh repo without ssh key'
+        return {
+                    \   'exitCode' : 'ZF_ERROR',
+                    \   'output' : 'ssh repo without ssh key',
+                    \ }
     endif
 
     let targetInfo = ZFGitBranchPick(a:toRemove, {
@@ -41,12 +58,18 @@ function! ZFGitRemoveBranch(toRemove, ...)
             redraw
             echo 'can not remove current branch:'
             echo '    ' . toRemove
-            return
+            return {
+                        \   'exitCode' : 'ZF_ERROR',
+                        \   'output' : 'can not remove current branch: ' . toRemove,
+                        \ }
         elseif curBranch == 'HEAD'
             redraw
             echo 'can not work on detached HEAD'
             echo '    ' . toRemove
-            return
+            return {
+                        \   'exitCode' : 'ZF_ERROR',
+                        \   'output' : 'can not work on detached HEAD: ' . toRemove,
+                        \ }
         endif
     endif
 
@@ -56,7 +79,10 @@ function! ZFGitRemoveBranch(toRemove, ...)
                 \   'needPwd' : removeRemote,
                 \ })
     if empty(gitInfo)
-        return
+        return {
+                    \   'exitCode' : 'ZF_CANCELED',
+                    \   'output' : 'not git repo or canceled',
+                    \ }
     endif
 
     if gitInfo.git_remotetype != 'ssh'
@@ -82,21 +108,29 @@ function! ZFGitRemoveBranch(toRemove, ...)
                 redraw
                 echo 'no target to remove'
                 echo '    ' . toRemove
-                return
+                return {
+                            \   'exitCode' : 'ZF_ERROR',
+                            \   'output' : 'no target to remove: ' . toRemove,
+                            \ }
             endif
         endif
-        let hint .= "\n[ZFGitRemoveBranch] about to remove " . targetHint . " branch:"
-        let hint .= "\n    " . toRemove
-        let hint .= "\n"
-        let hint .= "\nWARNING: can not undo"
-        let hint .= "\nenter `got it` to continue: "
-        call inputsave()
-        let input = input(hint)
-        call inputrestore()
-        if input != 'got it'
-            redraw
-            echo 'canceled'
-            return
+        if confirm
+            let hint .= "\n[ZFGitRemoveBranch] about to remove " . targetHint . " branch:"
+            let hint .= "\n    " . toRemove
+            let hint .= "\n"
+            let hint .= "\nWARNING: can not undo"
+            let hint .= "\nenter `got it` to continue: "
+            call inputsave()
+            let input = input(hint)
+            call inputrestore()
+            if input != 'got it'
+                redraw
+                echo 'canceled'
+                return {
+                            \   'exitCode' : 'ZF_CANCELED',
+                            \   'output' : '',
+                            \ }
+            endif
         endif
     endif
 
@@ -135,6 +169,11 @@ function! ZFGitRemoveBranch(toRemove, ...)
         echo 'remove remote branch:'
         echo removeRemoteResult
     endif
+
+    return {
+                \   'exitCode' : '0',
+                \   'output' : '',
+                \ }
 endfunction
 command! -nargs=* -bang -complete=customlist,ZFGitCmdComplete_branch ZFGitRemoveBranch :call ZFGitRemoveBranch(<q-args>, {'force' : (<q-bang> == '!' ? 1 : 0)})
 command! -nargs=* -bang -complete=customlist,ZFGitCmdComplete_branch ZFGitRemoveBranchLocal :call ZFGitRemoveBranch(<q-args>, {'force' : (<q-bang> == '!' ? 1 : 0), 'remote':0})
