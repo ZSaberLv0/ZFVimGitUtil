@@ -207,6 +207,7 @@ function! s:setupBuffer(cleanInfo, lines)
     setlocal foldignore=
     setlocal foldlevel=128
     let b:ZFGitCleanInfo = a:cleanInfo
+    let b:ZFGitCleanCwd = getcwd()
     nnoremap <buffer><silent> q :call ZF_GitClean_action()<cr>
     normal! gg8j
 endfunction
@@ -237,6 +238,9 @@ function! ZF_GitClean_action()
     endif
     let autoBackup = (confirm !=# 'Y')
 
+    let cwdSaved = getcwd()
+    execute 'cd ' . substitute(b:ZFGitCleanCwd, ' ', '\\ ', 'g')
+
     let toClean = []
     for item in getline(1, '$')
         if match(item, '^[ \t]*#') >= 0
@@ -261,6 +265,7 @@ function! ZF_GitClean_action()
 
     bdelete!
     ZFGitClean
+    execute 'cd ' . substitute(cwdSaved, ' ', '\\ ', 'g')
 endfunction
 
 function! s:cleanFileOrDir(cleanInfo, fileOrDir, autoBackup)
