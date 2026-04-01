@@ -627,11 +627,6 @@ function! ZFGitRepoList(...)
             if !followSymlink && ZFGitSymlinkCheck(allSymlink, path)
                 continue
             endif
-            " [\/\\]*\.git
-            let path = substitute(path, '[\/\\]*\.git', '', '')
-            if empty(path) || !isdirectory(path)
-                continue
-            endif
             call add(list, path)
         endfor
     elseif executable('find')
@@ -647,15 +642,21 @@ function! ZFGitRepoList(...)
             if !followSymlink && ZFGitSymlinkCheck(allSymlink, path)
                 continue
             endif
-            " [\/\\]*\.git
-            let path = substitute(path, '[\/\\]*\.git', '', '')
-            if empty(path) || !isdirectory(path)
-                continue
-            endif
             call add(list, path)
         endfor
     endif
 
-    return list
+    let ret = []
+    for path in list
+        " [\/\\]*\.git
+        let tmp = substitute(path, '[\/\\]*\.git', '', '')
+        if empty(tmp)
+            let tmp = '.'
+        endif
+        if isdirectory(tmp)
+            call add(ret, tmp)
+        endif
+    endfor
+    return ret
 endfunction
 

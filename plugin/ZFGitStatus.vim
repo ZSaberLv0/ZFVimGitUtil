@@ -27,15 +27,9 @@ function! ZFGitStatus(...)
 
     let hasChanges = 0
     let changes = {}
-    let postFixLen = len('/.git')
     let filters = values(get(g:, 'ZFGitRepoFilter', {}))
     let T_func = type(function('type'))
     for path in paths
-        let path = strpart(path, 0, len(path) - postFixLen)
-        if empty(path)
-            let path = '.'
-        endif
-
         " filter
         if filter
             let pathAbs = fnamemodify(path, ':p')
