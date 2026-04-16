@@ -17,3 +17,21 @@ function! ZFGitRebase(baseBranch)
 endfunction
 command! -nargs=* -complete=customlist,ZFGitCmdComplete_branch ZFGitRebase :call ZFGitRebase(<q-args>)
 
+function! ZFGitRebaseContinue()
+    if !exists(':Git')
+        echo 'ZFGitRebase depends on tpope/vim-fugitive'
+        return
+    endif
+    execute ':Git rebase --continue'
+endfunction
+command! -nargs=0 ZFGitRebaseContinue :call ZFGitRebaseContinue()
+
+function! ZFGitRebaseAbort()
+    if !exists(':Git')
+        echo 'ZFGitRebase depends on tpope/vim-fugitive'
+        return
+    endif
+    execute ':Git rebase --abort'
+endfunction
+command! -nargs=0 ZFGitRebaseAbort :call ZFGitRebaseAbort()
+

@@ -140,6 +140,11 @@ function! ZFGitRemoveBranch(toRemove, ...)
         call ZFGitCmd(config)
     endfor
 
+    let ret = {
+                \   'exitCode' : '0',
+                \   'output' : '',
+                \ }
+
     if removeLocal
         redraw
         echo 'removing local branch "' . toRemove . '" ... '
@@ -147,6 +152,10 @@ function! ZFGitRemoveBranch(toRemove, ...)
                     \ , force ? '-D' : '-d'
                     \ , toRemove
                     \ ))
+        if v:shell_error != '0'
+            let ret['exitCode'] = 'ZF_ERROR'
+            let ret['output'] = removeLocalResult
+        endif
     endif
 
     if removeRemote
@@ -154,6 +163,15 @@ function! ZFGitRemoveBranch(toRemove, ...)
         echo 'removing remote branch "' . toRemove . '" ... '
         let removeRemoteResult = ZFGitCmd(printf('git push "%s" --delete "%s"', remoteUrl, toRemove))
         let removeRemoteResult = substitute(removeRemoteResult, ':[^:]*@', '@', 'g')
+        if v:shell_error != '0'
+            let ret['exitCode'] = 'ZF_ERROR'
+            if empty(ret['output'])
+                let ret['output'] = removeLocalResult
+            else
+                let ret['output'] = ret['output'] . "\n" . removeLocalResult
+            endif
+        endif
+
         call ZFGitCmd(printf('git fetch -p "%s" "+refs/heads/*:refs/remotes/origin/*"', remoteUrl))
     endif
 
@@ -170,12 +188,126 @@ function! ZFGitRemoveBranch(toRemove, ...)
         echo removeRemoteResult
     endif
 
-    return {
-                \   'exitCode' : '0',
-                \   'output' : '',
-                \ }
+    return ret
 endfunction
 command! -nargs=* -bang -complete=customlist,ZFGitCmdComplete_branch ZFGitRemoveBranch :call ZFGitRemoveBranch(<q-args>, {'force' : (<q-bang> == '!' ? 1 : 0)})
 command! -nargs=* -bang -complete=customlist,ZFGitCmdComplete_branch ZFGitRemoveBranchLocal :call ZFGitRemoveBranch(<q-args>, {'force' : (<q-bang> == '!' ? 1 : 0), 'remote':0})
 command! -nargs=* -bang -complete=customlist,ZFGitCmdComplete_branch ZFGitRemoveBranchRemote :call ZFGitRemoveBranch(<q-args>, {'force' : (<q-bang> == '!' ? 1 : 0), 'local':0})
+
+" remove all local branches except current one
+"
+" option: {
+"   'force' : 0/1,
+" }
+" return: {
+"   'exitCode' : '',
+"       // 0: success
+"       // 'ZF_CANCELED': canceled
+"       // other: error
+"   'output' : '',
+"   'branches' : {
+"     'xxx branch' : { // each result of ZFGitRemoveBranch
+"       'exitCode' : '',
+"       'output' : '',
+"     },
+"   },
+" }
+function! ZFGitRemoveBranchUnusedLocal(...)
+    let option = get(a:, 1, {})
+    let force = get(option, 'force', 0)
+    let allBranch = ZFGitGetAllLocalBranch()
+    if empty(allBranch)
+        echo 'unable to obtain local branches'
+        return {
+                    \   'exitCode' : 'ZF_ERROR',
+                    \   'output' : 'unable to obtain local branches',
+                    \ }
+    endif
+    let curBranch = ZFGitGetCurBranch()
+    if empty(curBranch)
+        echo 'unable to obtain current branch'
+        return {
+                    \   'exitCode' : 'ZF_ERROR',
+                    \   'output' : 'unable to obtain current branch',
+                    \ }
+    endif
+    let index = index(allBranch, curBranch)
+    if index >= 0
+        call remove(allBranch, index)
+    endif
+    if empty(allBranch)
+        echo 'only one local branch, no need to remove'
+        return {
+                    \   'exitCode' : 'ZF_CANCELED',
+                    \   'output' : 'only one local branch, no need to remove',
+                    \ }
+    endif
+
+    if force
+        let hint = "\n[ZFGitRemoveBranch] about to remove all local branch except current:"
+        for toRemove in allBranch
+            let hint .= "\n    " . toRemove
+        endfor
+        let hint .= "\n"
+        let hint .= "\nWARNING: can not undo"
+        let hint .= "\nenter `got it` to continue: "
+        call inputsave()
+        let input = input(hint)
+        call inputrestore()
+        if input != 'got it'
+            redraw
+            echo 'canceled'
+            return {
+                        \   'exitCode' : 'ZF_CANCELED',
+                        \   'output' : '',
+                        \ }
+        endif
+    endif
+
+    let ret = {
+                \   'exitCode' : '0',
+                \   'output' : '',
+                \   'branches' : {},
+                \ }
+    let successList = []
+    let failList = []
+    for branch in allBranch
+        let branchRet = ZFGitRemoveBranch(branch, {
+                    \   'confirm' : 0,
+                    \   'force' : force,
+                    \   'local' : 1,
+                    \   'remote' : 0,
+                    \ })
+        let ret['branches'][branch] = branchRet
+        if branchRet['exitCode'] != '0'
+            let ret['exitCode'] = 'ZF_ERROR'
+            call add(failList, branch)
+        else
+            call add(successList, branch)
+        endif
+    endfor
+
+    if !empty(failList)
+        let ret['output'] = 'local branch remove failed:'
+        for branch in failList
+            let ret['output'] .= "\n    " . branch
+        endfor
+    endif
+    if !empty(successList)
+        if !empty(ret['output'])
+            let ret['output'] .= "\n\n"
+        endif
+        let ret['output'] .= 'local branch removed:'
+        for branch in successList
+            let ret['output'] .= "\n    " . branch
+        endfor
+    endif
+
+    redraw
+    if !empty(ret['output'])
+        echo ret['output']
+    endif
+    return ret
+endfunction
+command! -nargs=0 -bang ZFGitRemoveBranchUnusedLocal :call ZFGitRemoveBranchUnusedLocal({'force' : (<q-bang> == '!' ? 1 : 0)})
 
