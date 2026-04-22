@@ -13,7 +13,12 @@ function! ZFGitRebase(baseBranch)
         return
     endif
 
-    execute ':Git rebase -i ' . substitute(targetInfo['branch'], ' ', '\\ ', 'g')
+    let branch = targetInfo['branch']
+    if index(ZFGitGetAllLocalBranch(), branch) < 0
+        let branch = 'origin/' . branch
+    endif
+
+    execute ':Git rebase -i ' . substitute(branch, ' ', '\\ ', 'g')
 endfunction
 command! -nargs=* -complete=customlist,ZFGitCmdComplete_branch ZFGitRebase :call ZFGitRebase(<q-args>)
 
