@@ -17,15 +17,11 @@
 "   },
 " }
 function! ZFGitBatchClean(...)
-    let hint = "[ZFGitBatchClean] try to clean all repos' local changes under current dir, can not undo"
-    let hint .= "\n"
-    let hint .= "\nif you really know what you are doing,"
-    let hint .= "\nenter `got it` to continue: "
     return ZFGitBatchAction({
                 \   'listOption' : {
                 \       'filter' : 0,
                 \   },
-                \   'actionHint' : hint,
+                \   'actionHint' : '[ZFGitBatchClean] try to clean all repos local changes under current dir, can not undo',
                 \   'action' : [
                 \       "let taskResult = ZFGitClean(params['option'])",
                 \   ],

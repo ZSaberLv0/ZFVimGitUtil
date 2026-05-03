@@ -17,15 +17,11 @@
 "   },
 " }
 function! ZFGitBatchPush(...)
-    let hint = "[ZFGitBatchPush] try to push all repos under current dir using default config"
-    let hint .= "\n"
-    let hint .= "\nif you really know what you are doing,"
-    let hint .= "\nenter `got it` to continue: "
     return ZFGitBatchAction({
                 \   'listOption' : {
                 \       'all' : 1,
                 \   },
-                \   'actionHint' : hint,
+                \   'actionHint' : '[ZFGitBatchPush] try to push all repos under current dir using default config',
                 \   'action' : 'ZFGitBatchPushImpl',
                 \   'option' : get(a:, 1, {}),
                 \ })

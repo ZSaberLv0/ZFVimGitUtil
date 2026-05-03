@@ -18,15 +18,11 @@
 "   },
 " }
 function! ZFGitBatchPull(...)
-    let hint = "[ZFGitBatchPull] try to pull all repos under current dir using default config"
-    let hint .= "\n"
-    let hint .= "\nif you really know what you are doing,"
-    let hint .= "\nenter `got it` to continue: "
     return ZFGitBatchAction({
                 \   'listOption' : {
                 \       'all' : 1,
                 \   },
-                \   'actionHint' : hint,
+                \   'actionHint' : '[ZFGitBatchPull] try to pull all repos under current dir using default config',
                 \   'action' : 'ZFGitBatchPullImpl',
                 \   'option' : get(a:, 1, {}),
                 \ })

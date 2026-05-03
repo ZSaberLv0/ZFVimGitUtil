@@ -5,9 +5,68 @@ command! -nargs=0 ZFGitTmpStashList :call ZFGitTmpStashList()
 command! -nargs=0 ZFGitTmpStashPop :call ZFGitTmpStashPop()
 
 " ============================================================
+command! -bang -nargs=0 ZFGitTmpStashBatch :call ZFGitBatchAction({
+            \   'action' : [
+            \       "let taskResult = ZFGitTmpStash('', params['option'])",
+            \   ],
+            \   'option' : {
+            \       'clean' : <q-bang> == '!' ? 0 : 1,
+            \   },
+            \ })
+command! -nargs=0 ZFGitTmpStashBatchDrop :call ZFGitBatchAction({
+            \   'listOption' : {
+            \       'all' : 1,
+            \   },
+            \   'actionHint' : '[ZFGitTmpStashBatchDrop] try to drop all tmp stash',
+            \   'action' : [
+            \       "let taskResult = ZFGitTmpStashDrop('', params['option'])",
+            \   ],
+            \   'option' : {
+            \       'confirm' : 0,
+            \   },
+            \ })
+command! -nargs=0 ZFGitTmpStashBatchList :call ZFGitBatchAction({
+            \   'listOption' : {
+            \       'all' : 1,
+            \   },
+            \   'action' : 'ZFGitTmpStashBatchListImpl',
+            \ })
+command! -bang -nargs=0 ZFGitTmpStashBatchPop :call ZFGitBatchAction({
+            \   'listOption' : {
+            \       'all' : 1,
+            \   },
+            \   'actionHint' : '[ZFGitTmpStashBatchPop] try to pop all tmp stash',
+            \   'action' : [
+            \       "let taskResult = ZFGitTmpStashPop(params['option'])",
+            \   ],
+            \   'option' : {
+            \       'confirm' : 0,
+            \       'clean' : <q-bang> == '!' ? 0 : 1,
+            \   },
+            \ })
+function! ZFGitTmpStashBatchListImpl(path, params)
+    let stashList = ZFGitTmpStashList()
+    if empty(stashList)
+        return {
+                    \   'exitCode' : '0',
+                    \   'output' : '',
+                    \ }
+    else
+        return {
+                    \   'exitCode' : '0',
+                    \   'output' : "stashes:\n" .  ZFGitTmpStashListInfo(stashList),
+                    \ }
+    endif
+endfunction
+
+" ============================================================
 " param0: fileOrEmpty
 " param1: option: {
 "   'clean' : '1/0, whether clean after stash',
+" }
+" return: {
+"   'exitCode' : '',
+"   'output' : '',
 " }
 function! ZFGitTmpStash(...)
     let fileOrEmpty = get(a:, 1, '')
@@ -21,7 +80,10 @@ function! ZFGitTmpStash(...)
     endif
     if empty(statuses) || v:shell_error != '0'
         echo 'no changes'
-        return
+        return {
+                    \   'exitCode' : 'ZF_CANCELED',
+                    \   'output' : 'no changes',
+                    \ }
     endif
     let hint = []
     for status in split(statuses, "\n")
@@ -80,23 +142,38 @@ function! ZFGitTmpStash(...)
 
     if empty(hint)
         echo 'no changes'
-        return
+        return {
+                    \   'exitCode' : 'ZF_CANCELED',
+                    \   'output' : 'no changes',
+                    \ }
     endif
+
+    let output = ''
     if !empty(hint)
         if len(hint) == 1
-            echo 'stashed: ' . hint[0]
+            let output = 'stashed: ' . hint[0]
         else
-            echo 'stashed:'
+            let output = 'stashed:'
             for item in hint
-                echo item
+                let output .= "\n"
+                let output .= item
             endfor
         endif
+        echo output
     endif
+    return {
+                \   'exitCode' : 'ZF_CANCELED',
+                \   'output' : output,
+                \ }
 endfunction
 
 " param 0 : fileOrEmpty
 " param 1 : {
 "   'confirm' : 1/0,
+" }
+" return: {
+"   'exitCode' : '',
+"   'output' : '',
 " }
 function! ZFGitTmpStashDrop(...)
     let fileOrEmpty = get(a:, 1, '')
@@ -140,7 +217,10 @@ function! ZFGitTmpStashDrop(...)
         endfor
         if empty(hint)
             echo 'no stashes'
-            return
+            return {
+                        \   'exitCode' : 'ZF_CANCELED',
+                        \   'output' : 'no stashes',
+                        \ }
         endif
 
         if confirm
@@ -157,7 +237,10 @@ function! ZFGitTmpStashDrop(...)
             redraw
             if input != 'got it'
                 echo 'canceled'
-                return
+                return {
+                            \   'exitCode' : 'ZF_CANCELED',
+                            \   'output' : 'no stashes',
+                            \ }
             endif
             let confirm = 0
         else
@@ -165,18 +248,42 @@ function! ZFGitTmpStashDrop(...)
         endif
     endwhile
 
-    if len(hint) == 1
-        echo 'stash dropped: ' . hint[0]
-    else
-        echo 'stash dropped:'
-        for item in hint
-            echo item
-        endfor
-    endif
-
     if empty(fileOrEmpty)
         call s:rm(s:basePath)
     endif
+
+    let output = ''
+    if len(hint) == 1
+        let output = 'stash dropped: ' . hint[0]
+    else
+        let output = 'stash dropped:'
+        for item in hint
+            let output .= "\n"
+            let output .= item
+        endfor
+        echo output
+    endif
+    return {
+                \   'exitCode' : 'ZF_CANCELED',
+                \   'output' : output,
+                \ }
+endfunction
+
+function! ZFGitTmpStashListInfo(stashList)
+    let ret = ''
+    for item in get(a:stashList, 'del', [])
+        if !empty(ret)
+            let ret .= "\n"
+        endif
+        let ret .= '  D ' . item
+    endfor
+    for item in get(a:stashList, 'mod', [])
+        if !empty(ret)
+            let ret .= "\n"
+        endif
+        let ret .= '    ' . item
+    endfor
+    return ret
 endfunction
 
 " return: {
@@ -207,60 +314,67 @@ function! ZFGitTmpStashList()
     endif
 
     echo 'stashes:'
-    for item in ret['del']
-        echo '  D ' . item
-    endfor
-    for item in ret['mod']
-        echo '    ' . item
-    endfor
+    echo ZFGitTmpStashListInfo(ret)
     return ret
 endfunction
 
 " option: {
 "   'confirm' : 1/0,
+"   'clean' : 1/0,
+" }
+" return: {
+"   'exitCode' : '',
+"   'output' : '',
 " }
 function! ZFGitTmpStashPop(...)
     let option = get(a:, 1, {})
     silent! let status = ZFGitTmpStashList()
     if empty(status)
         echo 'no stashes'
-        return
+        return {
+                    \   'exitCode' : 'ZF_CANCELED',
+                    \   'output' : 'no stashes',
+                    \ }
     endif
 
-    let clean = 1
+    let clean = get(option, 'clean', 1)
     if get(option, 'confirm', 1)
         echo 'stashes to apply:'
-        for item in status['del']
-            echo '  D ' . item
-        endfor
-        for item in status['mod']
-            echo '    ' . item
-        endfor
+        echo ZFGitTmpStashListInfo(status)
         echo "\n"
         echo 'confirm to apply stashes? [y/Y/n]: '
         let input = getchar()
         redraw
         if input != char2nr('y') && input != char2nr('Y')
             echo 'canceled'
-            return
+            return {
+                        \   'exitCode' : 'ZF_CANCELED',
+                        \   'output' : 'canceled',
+                        \ }
         endif
         if input == char2nr('Y')
             let clean = 0
         endif
     endif
 
-    echo 'stashes applied:'
     for item in status['del']
         call s:rm(item)
-        echo '  D ' . item
     endfor
     for item in status['mod']
         call s:cp(printf('%s/%s', s:basePath, item), item)
-        echo '    ' . item
     endfor
     if clean
         call s:rm(s:basePath)
     endif
+
+    redraw
+    let output = "stashes applied:\n"
+    let output .= ZFGitTmpStashListInfo(status)
+    echo output
+    return {
+                \   'exitCode' : '0',
+                \   'output' : output,
+                \ }
 endfunction
 
 let s:basePath = '.git/ZFGitTmpStash'

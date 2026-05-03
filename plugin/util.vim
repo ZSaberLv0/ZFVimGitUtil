@@ -679,6 +679,15 @@ endfunction
 "       // * `taskResult` must be defined as action result
 "   'option' : {...}, // for impl to store option
 " }
+" return: {
+"   'exitCode' : '',
+"   'task' : {
+"     'repo path' : {
+"       'exitCode' : '',
+"       'output' : '',
+"     },
+"   },
+" }
 function! ZFGitBatchAction(params)
     let params = a:params
 
@@ -701,6 +710,9 @@ function! ZFGitBatchAction(params)
             let hint = T_hint(params)
         endif
         if !empty(hint)
+            let hint .= "\n"
+            let hint .= "\nif you really know what you are doing,"
+            let hint .= "\nenter `got it` to continue: "
             call inputsave()
             let input = input(hint)
             call inputrestore()
@@ -748,6 +760,8 @@ function! ZFGitBatchAction(params)
             execute 'cd ' . substitute(pwdSaved, ' ', '\\ ', 'g')
         endtry
         if !empty(get(taskResult, 'output', ''))
+            call add(taskHint, '============================================================')
+            call add(taskHint, 'REPO: ' . path)
             call add(taskHint, taskResult['output'])
         endif
         let task[path] = taskResult

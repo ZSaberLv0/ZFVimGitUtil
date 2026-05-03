@@ -17,15 +17,11 @@
 "   },
 " }
 function! ZFGitBatchFetch(...)
-    let hint = "[ZFGitBatchFetch] try to fetch and prune all repos under current dir using default config"
-    let hint .= "\n"
-    let hint .= "\nif you really know what you are doing,"
-    let hint .= "\nenter `got it` to continue: "
     return ZFGitBatchAction({
                 \   'listOption' : {
                 \       'all' : 1,
                 \   },
-                \   'actionHint' : hint,
+                \   'actionHint' : '[ZFGitBatchFetch] try to fetch and prune all repos under current dir using default config',
                 \   'action' : [
                 \       "let taskResult = ZFGitFetch(params['option'])",
                 \   ],
