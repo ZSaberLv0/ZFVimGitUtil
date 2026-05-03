@@ -660,3 +660,114 @@ function! ZFGitRepoList(...)
     return ret
 endfunction
 
+" params: {
+"   'listOption' : { // optional, filter option passed to ZFGitStatus
+"     'all' : 0/1,
+"     'filter' : 1/0,
+"     'followSymlink' : 0/1,
+"   },
+"   'actionHint' : 'optional, string or `string func(params)` to show confirm hint before start',
+"   'action' : 'func name or func(path, params) to run',
+"       // action must return:
+"       //     {
+"       //         'exitCode' : '0 or error code',
+"       //         'output' : 'xxx',
+"       //     }
+"       // action can also be list of string to run, example:
+"       //     ['let taskResult = YourAction(path, param)']
+"       // * `path` and `param` already defined as normal var
+"       // * `taskResult` must be defined as action result
+"   'option' : {...}, // for impl to store option
+" }
+function! ZFGitBatchAction(params)
+    let params = a:params
+
+    redraw | echo 'checking repos under current dir...'
+    silent! let changes = ZFGitStatus(get(a:params, 'listOption', {}))
+    if empty(changes)
+        redraw | echo 'no repos'
+        return {
+                    \   'exitCode' : 'ZF_NO_REPO',
+                    \   'task' : {},
+                    \ }
+    endif
+
+    redraw
+    let T_hint = get(params, 'actionHint', '')
+    if !empty(T_hint)
+        if type(T_hint) == type('')
+            let hint = T_hint
+        else
+            let hint = T_hint(params)
+        endif
+        if !empty(hint)
+            call inputsave()
+            let input = input(hint)
+            call inputrestore()
+            if input != 'got it'
+                redraw
+                echo 'canceled'
+                return {
+                            \   'exitCode' : 'ZF_CANCELED',
+                            \   'task' : {},
+                            \ }
+            endif
+        endif
+    endif
+
+    let pwdSaved = getcwd()
+    let taskHint = []
+
+    let exitCode = ''
+    let task = {}
+
+    for path in keys(changes)
+        redraw
+        let taskResult = {}
+        let taskSuccess = 1
+        try
+            execute 'cd ' . substitute(path, ' ', '\\ ', 'g')
+            if type(params['action']) == type('')
+                let Fn_action = function(params['action'])
+                let taskResult = Fn_action(path, params)
+            elseif type(params['action']) == type(function('function'))
+                let Fn_action = params['action']
+                let taskResult = Fn_action(path, params)
+            elseif type(params['action']) == type([])
+                for actionCmd in params['action']
+                    execute actionCmd
+                endfor
+            endif
+        catch
+            let taskResult = {
+                        \   'exitCode' : 'ZF_ERROR',
+                        \   'output' : printf('%s', v:exception),
+                        \ }
+            let taskSuccess = 0
+        finally
+            execute 'cd ' . substitute(pwdSaved, ' ', '\\ ', 'g')
+        endtry
+        if !empty(get(taskResult, 'output', ''))
+            call add(taskHint, taskResult['output'])
+        endif
+        let task[path] = taskResult
+        if !taskSuccess
+            if exitCode != ''
+                let exitCode .= '_'
+            endif
+            let exitCode .= taskResult['exitCode']
+            break
+        endif
+    endfor
+
+    execute 'cd ' . substitute(pwdSaved, ' ', '\\ ', 'g')
+    let taskHintText = join(taskHint, "\n")
+    let @t = taskHintText
+    redraw
+    echo taskHintText
+    return {
+                \   'exitCode' : (exitCode == '' ? '0' : exitCode),
+                \   'task' : task,
+                \ }
+endfunction
+

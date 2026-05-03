@@ -14,99 +14,35 @@
 "     'repo path' : {
 "       'exitCode' : '', // result of ZFGitPushQuickly
 "       'output' : '',
-"       'changes' : [ // changes of ZFGitStatus
-"         'U xxx',
-"         'D xxx',
-"       ],
 "     },
 "   },
 " }
 function! ZFGitBatchPull(...)
-    let option = get(a:, 1, {})
-    let clean = get(option, 'clean', 0)
-    let gc = get(option, 'gc', clean)
-
-    redraw
     let hint = "[ZFGitBatchPull] try to pull all repos under current dir using default config"
     let hint .= "\n"
     let hint .= "\nif you really know what you are doing,"
     let hint .= "\nenter `got it` to continue: "
-    call inputsave()
-    let input = input(hint)
-    call inputrestore()
-    if input != 'got it'
-        redraw
-        echo 'canceled'
-        return {
-                    \   'exitCode' : 'ZF_CANCELED',
-                    \   'task' : {},
-                    \ }
-    endif
-
-    redraw | echo 'checking repos under current dir...'
-    silent! let changes = ZFGitStatus({
-                \   'all' : 1,
+    return ZFGitBatchAction({
+                \   'listOption' : {
+                \       'all' : 1,
+                \   },
+                \   'actionHint' : hint,
+                \   'action' : 'ZFGitBatchPullImpl',
+                \   'option' : get(a:, 1, {}),
                 \ })
-    if empty(changes)
-        redraw | echo 'no repos'
-        return {
-                    \   'exitCode' : 'ZF_NO_REPO',
-                    \   'task' : {},
-                    \ }
+endfunction
+function! ZFGitBatchPullImpl(path, params)
+    let clean = get(a:params['option'], 'clean', 0)
+    let gc = get(a:params['option'], 'gc', clean)
+    if clean
+        silent! call ZFGitCleanRun(ZFGitCleanInfo())
     endif
-
-    let pwdSaved = getcwd()
-    let taskHint = []
-
-    let exitCode = ''
-    let task = {}
-
-    for path in keys(changes)
-        let taskResult = {}
-        let taskSuccess = 1
-        try
-            execute 'cd ' . substitute(path, ' ', '\\ ', 'g')
-            if clean
-                silent! call ZFGitCleanRun(ZFGitCleanInfo())
-            endif
-            if gc
-                call ZFGitCmd('git gc --aggressive')
-            endif
-            let taskResult = ZFGitPushQuickly({
-                        \   'mode' : 'u',
-                        \ })
-        catch
-            let taskResult = {
-                        \   'exitCode' : 'ZF_ERROR',
-                        \   'output' : printf('%s', v:exception),
-                        \ }
-            let taskSuccess = 0
-        finally
-            execute 'cd ' . substitute(pwdSaved, ' ', '\\ ', 'g')
-        endtry
-        if !empty(get(taskResult, 'output', ''))
-            call add(taskHint, taskResult['output'])
-        endif
-        let taskResult['changes'] = changes[path]
-        let task[path] = taskResult
-        if !taskSuccess
-            if exitCode != ''
-                let exitCode .= '_'
-            endif
-            let exitCode .= taskResult['exitCode']
-            break
-        endif
-    endfor
-
-    execute 'cd ' . substitute(pwdSaved, ' ', '\\ ', 'g')
-    let taskHintText = join(taskHint, "\n")
-    let @t = taskHintText
-    redraw
-    echo taskHintText
-    return {
-                \   'exitCode' : (exitCode == '' ? '0' : exitCode),
-                \   'task' : task,
-                \ }
+    if gc
+        call ZFGitCmd('git gc --aggressive')
+    endif
+    return ZFGitPushQuickly({
+                \   'mode' : 'u',
+                \ })
 endfunction
 command! -nargs=* ZFGitBatchPull :call ZFGitBatchPull(<args>)
 
