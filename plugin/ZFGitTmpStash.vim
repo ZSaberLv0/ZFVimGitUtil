@@ -6,6 +6,9 @@ command! -nargs=0 ZFGitTmpStashPop :call ZFGitTmpStashPop()
 
 " ============================================================
 command! -bang -nargs=0 ZFGitTmpStashBatch :call ZFGitBatchAction({
+            \   'listOption' : {
+            \       'followSymlink' : 1,
+            \   },
             \   'action' : [
             \       "let taskResult = ZFGitTmpStash('', params['option'])",
             \   ],
@@ -16,6 +19,7 @@ command! -bang -nargs=0 ZFGitTmpStashBatch :call ZFGitBatchAction({
 command! -nargs=0 ZFGitTmpStashBatchDrop :call ZFGitBatchAction({
             \   'listOption' : {
             \       'all' : 1,
+            \       'followSymlink' : 1,
             \   },
             \   'actionHint' : '[ZFGitTmpStashBatchDrop] try to drop all tmp stash',
             \   'action' : [
@@ -28,12 +32,14 @@ command! -nargs=0 ZFGitTmpStashBatchDrop :call ZFGitBatchAction({
 command! -nargs=0 ZFGitTmpStashBatchList :call ZFGitBatchAction({
             \   'listOption' : {
             \       'all' : 1,
+            \       'followSymlink' : 1,
             \   },
             \   'action' : 'ZFGitTmpStashBatchListImpl',
             \ })
 command! -bang -nargs=0 ZFGitTmpStashBatchPop :call ZFGitBatchAction({
             \   'listOption' : {
             \       'all' : 1,
+            \       'followSymlink' : 1,
             \   },
             \   'actionHint' : '[ZFGitTmpStashBatchPop] try to pop all tmp stash',
             \   'action' : [
