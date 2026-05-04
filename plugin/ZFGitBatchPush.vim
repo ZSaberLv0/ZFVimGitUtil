@@ -21,12 +21,13 @@ function! ZFGitBatchPush(...)
                 \   'listOption' : {
                 \       'all' : 1,
                 \   },
+                \   'showRepoChanges' : '1',
                 \   'actionHint' : '[ZFGitBatchPush] try to push all repos under current dir using default config',
                 \   'action' : 'ZFGitBatchPushImpl',
                 \   'option' : get(a:, 1, {}),
                 \ })
 endfunction
-function! ZFGitBatchPushImpl(path, params)
+function! ZFGitBatchPushImpl(path, params, changes)
     return ZFGitPushQuickly({
                 \   'mode' : '!',
                 \   'comment' : get(a:params['option'], 'comment', ''),

@@ -5,52 +5,58 @@ command! -nargs=0 ZFGitTmpStashList :call ZFGitTmpStashList()
 command! -nargs=0 ZFGitTmpStashPop :call ZFGitTmpStashPop()
 
 " ============================================================
-command! -bang -nargs=0 ZFGitTmpStashBatch :call ZFGitBatchAction({
+command! -bang -nargs=0 ZFGitTmpStashBatch :call s:outputFix(ZFGitBatchAction({
             \   'listOption' : {
-            \       'followSymlink' : 1,
             \   },
             \   'action' : [
             \       "let taskResult = ZFGitTmpStash('', params['option'])",
+            \       "if taskResult['exitCode'] != '0' | let taskResult['output'] = '' | endif",
             \   ],
             \   'option' : {
             \       'clean' : <q-bang> == '!' ? 0 : 1,
             \   },
-            \ })
-command! -nargs=0 ZFGitTmpStashBatchDrop :call ZFGitBatchAction({
+            \ }), 'no changes')
+command! -nargs=0 ZFGitTmpStashBatchDrop :call s:outputFix(ZFGitBatchAction({
             \   'listOption' : {
             \       'all' : 1,
-            \       'followSymlink' : 1,
             \   },
             \   'actionHint' : '[ZFGitTmpStashBatchDrop] try to drop all tmp stash',
             \   'action' : [
             \       "let taskResult = ZFGitTmpStashDrop('', params['option'])",
+            \       "if taskResult['exitCode'] != '0' | let taskResult['output'] = '' | endif",
             \   ],
             \   'option' : {
             \       'confirm' : 0,
             \   },
-            \ })
-command! -nargs=0 ZFGitTmpStashBatchList :call ZFGitBatchAction({
+            \ }), 'no stashes')
+command! -nargs=0 ZFGitTmpStashBatchList :call s:outputFix(ZFGitBatchAction({
             \   'listOption' : {
             \       'all' : 1,
-            \       'followSymlink' : 1,
             \   },
             \   'action' : 'ZFGitTmpStashBatchListImpl',
-            \ })
-command! -bang -nargs=0 ZFGitTmpStashBatchPop :call ZFGitBatchAction({
+            \ }), 'no stashes')
+command! -bang -nargs=0 ZFGitTmpStashBatchPop :call s:outputFix(ZFGitBatchAction({
             \   'listOption' : {
             \       'all' : 1,
-            \       'followSymlink' : 1,
             \   },
             \   'actionHint' : '[ZFGitTmpStashBatchPop] try to pop all tmp stash',
             \   'action' : [
             \       "let taskResult = ZFGitTmpStashPop(params['option'])",
+            \       "if taskResult['exitCode'] != '0' | let taskResult['output'] = '' | endif",
             \   ],
             \   'option' : {
             \       'confirm' : 0,
             \       'clean' : <q-bang> == '!' ? 0 : 1,
             \   },
-            \ })
-function! ZFGitTmpStashBatchListImpl(path, params)
+            \ }), 'no stashes')
+function! s:outputFix(result, fix)
+    if empty(a:result['output'])
+        let a:result['output'] = a:fix
+        redraw
+        echo a:result['output']
+    endif
+endfunction
+function! ZFGitTmpStashBatchListImpl(path, params, changes)
     let stashList = ZFGitTmpStashList()
     if empty(stashList)
         return {
@@ -168,7 +174,7 @@ function! ZFGitTmpStash(...)
         echo output
     endif
     return {
-                \   'exitCode' : 'ZF_CANCELED',
+                \   'exitCode' : '0',
                 \   'output' : output,
                 \ }
 endfunction
@@ -270,7 +276,7 @@ function! ZFGitTmpStashDrop(...)
         echo output
     endif
     return {
-                \   'exitCode' : 'ZF_CANCELED',
+                \   'exitCode' : '0',
                 \   'output' : output,
                 \ }
 endfunction

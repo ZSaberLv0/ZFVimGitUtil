@@ -18,9 +18,7 @@
 " }
 function! ZFGitBatchClean(...)
     return ZFGitBatchAction({
-                \   'listOption' : {
-                \       'filter' : 0,
-                \   },
+                \   'showRepoChanges' : '1',
                 \   'actionHint' : '[ZFGitBatchClean] try to clean all repos local changes under current dir, can not undo',
                 \   'action' : [
                 \       "let taskResult = ZFGitClean(params['option'])",

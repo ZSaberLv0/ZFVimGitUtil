@@ -2,7 +2,7 @@
 " option: {
 "   'all' : 0/1, // whether include repo which has no changes, default: 0
 "   'filter' : 1/0, // whether apply g:ZFGitRepoFilter
-"   'followSymlink' : 0/1, // whether follow symlink
+"   'followSymlink' : 1/0, // whether follow symlink
 " }
 "
 " return: {
@@ -15,11 +15,10 @@ function! ZFGitStatus(...)
     let option = get(a:, 1, {})
     let all = get(option, 'all', 0)
     let filter = get(option, 'filter', 1)
-    let followSymlink = get(option, 'followSymlink', 0)
 
     redraw | echo 'checking...'
 
-    let paths = ZFGitRepoList(followSymlink)
+    let paths = ZFGitRepoList(option)
     if empty(paths)
         redraw | echo 'no changes'
         return []
@@ -27,28 +26,7 @@ function! ZFGitStatus(...)
 
     let hasChanges = 0
     let changes = {}
-    let filters = values(get(g:, 'ZFGitRepoFilter', {}))
-    let T_func = type(function('type'))
     for path in paths
-        " filter
-        if filter
-            let pathAbs = fnamemodify(path, ':p')
-            let filterFlag = 0
-            for T_filter in filters
-                if type(T_filter) == T_func
-                    let filterFlag = T_filter(pathAbs)
-                else
-                    let filterFlag = (match(pathAbs, T_filter) >= 0) ? 1 : 0
-                endif
-                if filterFlag
-                    break
-                endif
-            endfor
-            if filterFlag
-                continue
-            endif
-        endif
-
         let change = split(ZFGitCmd(printf('cd "%s" && git status -s', path)), "\n")
         if all || !empty(change)
             if !empty(change)
@@ -78,5 +56,5 @@ function! ZFGitStatus(...)
     let @t = hint
     return changes
 endfunction
-command! -nargs=0 -bang ZFGitStatus :call ZFGitStatus(<q-bang> == '!' ? {} : {'filter':0})
+command! -nargs=0 -bang ZFGitStatus :call ZFGitStatus(<q-bang> == '!' ? {'filter' : 0} : {})
 

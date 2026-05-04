@@ -561,8 +561,11 @@ function! ZFGitCmdComplete_changedPath(ArgLead, CmdLine, CursorPos)
 endfunction
 
 " ============================================================
+" return: {
+"     'symlink path' : 'original path',
+" }
 function! ZFGitSymlinkGetAll()
-    let ret = []
+    let ret = {}
     if (has('win32') || has('win64')) && !has('unix')
         for f in split(ZFGitCmd('dir /AL /S /B'), "\n")
             let ck = fnamemodify(f, ':.')
@@ -570,20 +573,21 @@ function! ZFGitSymlinkGetAll()
                 continue
             endif
             let exist = 0
-            for t in ret
+            for t in keys(ret)
                 if match(ck, substitute(t, '\\', '\\\\', 'g') . '\>') == 0
                     let exist = 1
                     break
                 endif
             endfor
             if !exist
-                call add(ret, ck)
+                let ret[ck] = resolve(ck)
             endif
         endfor
     else
         for f in split(ZFGitCmd('find . -type l'), "\n")
             if isdirectory(f)
-                call add(ret, fnamemodify(f, ':.'))
+                let t = fnamemodify(f, ':.')
+                let ret[t] = resolve(t)
             endif
         endfor
     endif
@@ -595,7 +599,7 @@ function! ZFGitSymlinkCheck(allSymlink, ck)
         return 0
     endif
     let ckLen = len(ck)
-    for f in a:allSymlink
+    for f in keys(a:allSymlink)
         let len = len(f)
         if ckLen == len
             if ck == f
@@ -610,77 +614,94 @@ function! ZFGitSymlinkCheck(allSymlink, ck)
     return 0
 endfunction
 
-" param:
-"     * 0/1 : follow symlink
+" option: {
+"   'filter' : 1/0, // whether apply g:ZFGitRepoFilter
+"   'followSymlink' : 1/0, // whether follow symlink
+" }
 " return: array of all valid git root path
 function! ZFGitRepoList(...)
-    let followSymlink = get(a:, 1, 0)
+    let option = get(a:, 1, {})
+    let filter = get(option, 'filter', 1)
+    let followSymlink = get(option, 'followSymlink', 1)
 
     if (has('win32') || has('win64')) && !has('unix')
-        let list = []
-        if followSymlink
-            let allSymlink = []
-        else
-            let allSymlink = ZFGitSymlinkGetAll()
-        endif
-        for path in split(system('dir /s /ad /b ".git*" | findstr "\.git$"'), "\n")
-            if !followSymlink && ZFGitSymlinkCheck(allSymlink, path)
-                continue
-            endif
-            call add(list, path)
-        endfor
+        let candidates = split(system('dir /s /ad /b ".git*" | findstr "\.git$"'), "\n")
     elseif executable('find')
-        let list = split(system(printf('find %s . -type d -name ".git"', followSymlink ? '-L' : '')), "\n")
+        let candidates = split(system(printf('find %s . -type d -name ".git"', followSymlink ? '-L' : '')), "\n")
     else
-        let list = []
-        if followSymlink
-            let allSymlink = []
-        else
-            let allSymlink = ZFGitSymlinkGetAll()
-        endif
-        for path in split(glob('**/.git', 1), "\n")
-            if !followSymlink && ZFGitSymlinkCheck(allSymlink, path)
-                continue
-            endif
-            call add(list, path)
-        endfor
+        let candidates = split(glob('**/.git', 1), "\n")
     endif
 
-    let ret = []
-    for path in list
+    let ret = {}
+    let allSymlink = ZFGitSymlinkGetAll()
+    let absResolved = {}
+    let filters = values(get(g:, 'ZFGitRepoFilter', {}))
+    for path in candidates
+        if !followSymlink && ZFGitSymlinkCheck(allSymlink, path)
+            continue
+        endif
+        let path = resolve(path)
+        if exists('ret[path]')
+            continue
+        endif
+
+        " filter
+        if filter
+            let pathAbs = fnamemodify(path, ':p')
+            let filterFlag = 0
+            for T_filter in filters
+                if type(T_filter) == type(function('type'))
+                    let filterFlag = T_filter(pathAbs)
+                else
+                    let filterFlag = (match(pathAbs, T_filter) >= 0) ? 1 : 0
+                endif
+                if filterFlag
+                    break
+                endif
+            endfor
+            if filterFlag
+                continue
+            endif
+        endif
+
         " [\/\\]*\.git
-        let tmp = substitute(path, '[\/\\]*\.git', '', '')
-        if empty(tmp)
-            let tmp = '.'
+        let path = substitute(path, '[\/\\]*\.git', '', '')
+        if empty(path)
+            let path = '.'
         endif
-        if isdirectory(tmp)
-            call add(ret, tmp)
+        if !isdirectory(path)
+            continue
         endif
+
+        let ret[path] = 1
     endfor
-    return ret
+    return keys(ret)
 endfunction
 
 " params: {
 "   'listOption' : { // optional, filter option passed to ZFGitStatus
 "     'all' : 0/1,
 "     'filter' : 1/0,
-"     'followSymlink' : 0/1,
+"     'followSymlink' : 1/0,
 "   },
-"   'actionHint' : 'optional, string or `string func(params)` to show confirm hint before start',
-"   'action' : 'func name or func(path, params) to run',
+"   'showRepoList' : '1/0, optional, whether show repo list to confirm',
+"   'showRepoChanges' : '0/1, optional, whether show repo changes to confirm',
+"   'actionHint' : 'optional, string or `string func(params, changes)` to show confirm hint before start',
+"   'action' : 'func name or func(path, params, changes) to run',
 "       // action must return:
 "       //     {
 "       //         'exitCode' : '0 or error code',
 "       //         'output' : 'xxx',
 "       //     }
 "       // action can also be list of string to run, example:
-"       //     ['let taskResult = YourAction(path, param)']
-"       // * `path` and `param` already defined as normal var
+"       //     ['let taskResult = YourAction(path, params, changes)']
+"       // * `path/params/changes` already defined as normal var
 "       // * `taskResult` must be defined as action result
 "   'option' : {...}, // for impl to store option
 " }
 " return: {
 "   'exitCode' : '',
+"   'output' : '',
 "   'task' : {
 "     'repo path' : {
 "       'exitCode' : '',
@@ -697,6 +718,7 @@ function! ZFGitBatchAction(params)
         redraw | echo 'no repos'
         return {
                     \   'exitCode' : 'ZF_NO_REPO',
+                    \   'output' : 'no repos',
                     \   'task' : {},
                     \ }
     endif
@@ -707,9 +729,25 @@ function! ZFGitBatchAction(params)
         if type(T_hint) == type('')
             let hint = T_hint
         else
-            let hint = T_hint(params)
+            let hint = T_hint(params, changes)
         endif
         if !empty(hint)
+            if get(a:params, 'showRepoList', 1)
+                let hintPrev = 'repo list:'
+                for path in sort(keys(changes))
+                    let hintPrev .= "\n    "
+                    let hintPrev .= path
+                    if get(a:params, 'showRepoChanges', 0)
+                        for change in changes[path]
+                            let hintPrev .= "\n        "
+                            let hintPrev .= change
+                        endfor
+                    endif
+                endfor
+                let hintPrev .= "\n\n============================================================\n"
+                let hint = hintPrev . hint
+            endif
+
             let hint .= "\n"
             let hint .= "\nif you really know what you are doing,"
             let hint .= "\nenter `got it` to continue: "
@@ -721,6 +759,7 @@ function! ZFGitBatchAction(params)
                 echo 'canceled'
                 return {
                             \   'exitCode' : 'ZF_CANCELED',
+                            \   'output' : 'canceled',
                             \   'task' : {},
                             \ }
             endif
@@ -741,10 +780,10 @@ function! ZFGitBatchAction(params)
             execute 'cd ' . substitute(path, ' ', '\\ ', 'g')
             if type(params['action']) == type('')
                 let Fn_action = function(params['action'])
-                let taskResult = Fn_action(path, params)
+                let taskResult = Fn_action(path, params, changes)
             elseif type(params['action']) == type(function('function'))
                 let Fn_action = params['action']
-                let taskResult = Fn_action(path, params)
+                let taskResult = Fn_action(path, params, changes)
             elseif type(params['action']) == type([])
                 for actionCmd in params['action']
                     execute actionCmd
@@ -781,6 +820,7 @@ function! ZFGitBatchAction(params)
     echo taskHintText
     return {
                 \   'exitCode' : (exitCode == '' ? '0' : exitCode),
+                \   'output' : taskHintText,
                 \   'task' : task,
                 \ }
 endfunction

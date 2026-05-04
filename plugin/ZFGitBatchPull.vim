@@ -27,7 +27,7 @@ function! ZFGitBatchPull(...)
                 \   'option' : get(a:, 1, {}),
                 \ })
 endfunction
-function! ZFGitBatchPullImpl(path, params)
+function! ZFGitBatchPullImpl(path, params, changes)
     let clean = get(a:params['option'], 'clean', 0)
     let gc = get(a:params['option'], 'gc', clean)
     if clean
