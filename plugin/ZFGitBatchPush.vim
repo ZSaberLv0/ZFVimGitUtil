@@ -18,9 +18,6 @@
 " }
 function! ZFGitBatchPush(...)
     return ZFGitBatchAction({
-                \   'listOption' : {
-                \       'all' : 1,
-                \   },
                 \   'showRepoChanges' : '1',
                 \   'actionHint' : '[ZFGitBatchPush] try to push all repos under current dir using default config',
                 \   'action' : 'ZFGitBatchPushImpl',
